@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 
+// mg = magic charge per task completion
 const TASKS = [
-  { id: 1, icon: '☀️', text: '听到闹钟立刻起床不赖床', pts: 15, double: false, attackType: 'sunrise' },
-  { id: 2, icon: '🪥', text: '自己刷牙洗脸换衣服', pts: 10, double: false, attackType: 'bubble' },
-  { id: 3, icon: '🎒', text: '自己准备书包和饭盒', pts: 15, double: false, attackType: 'star_throw' },
-  { id: 4, icon: '📚', text: '完成作业/阅读打卡', pts: 20, double: false, attackType: 'book_blast' },
-  { id: 5, icon: '🌙', text: '闹钟响了立刻上床睡觉', pts: 20, double: false, attackType: 'moon_beam' },
-  { id: 6, icon: '🌟', text: '做了自我突破/有进步的事', pts: 15, double: true, sub: '双倍积分！', attackType: 'rainbow' },
-  { id: 7, icon: '🎯', text: '专注写作业，不发呆不做无关事', pts: 15, double: true, sub: '双倍积分！', attackType: 'laser' },
-  { id: 8, icon: '🧹', text: '整理自己的东西', pts: 10, double: false, attackType: 'whirlwind' },
-  { id: 9, icon: '📖', text: '阅读30分钟爸爸妈妈选书', pts: 15, double: false, attackType: 'book_blast' },
+  { id: 1, icon: '☀️', text: '听到闹钟立刻起床不赖床', pts: 15, mg: 80,  double: false, attackType: 'sunrise' },
+  { id: 2, icon: '🪥', text: '自己刷牙洗脸换衣服',     pts: 10, mg: 50,  double: false, attackType: 'bubble' },
+  { id: 3, icon: '🎒', text: '自己准备书包和饭盒',     pts: 15, mg: 70,  double: false, attackType: 'star_throw' },
+  { id: 4, icon: '📚', text: '完成作业/阅读打卡',      pts: 20, mg: 120, double: false, attackType: 'book_blast' },
+  { id: 5, icon: '🌙', text: '闹钟响了立刻上床睡觉',   pts: 20, mg: 120, double: false, attackType: 'moon_beam' },
+  { id: 6, icon: '🌟', text: '做了自我突破/有进步的事', pts: 15, mg: 150, double: true,  sub: '双倍魔法！', attackType: 'rainbow' },
+  { id: 7, icon: '🎯', text: '专注写作业，不发呆不做无关事', pts: 15, mg: 150, double: true, sub: '双倍魔法！', attackType: 'laser' },
+  { id: 8, icon: '🧹', text: '整理自己的东西',         pts: 10, mg: 50,  double: false, attackType: 'whirlwind' },
+  { id: 9, icon: '📖', text: '阅读30分钟爸爸妈妈选书', pts: 15, mg: 80,  double: false, attackType: 'book_blast' },
 ];
 
 const LEVELS = [
@@ -30,7 +31,8 @@ const LEVELS = [
   { lv: 15, name: '彩虹传说',   color: '#ffffff', dark: '#a855f7' },
 ];
 
-function mgThreshold(lv) { return 600 + (lv - 1) * 100; }
+// Magic threshold: always 600. Tasks recharge it. Full → unleash ultimate!
+function mgThreshold() { return 600; }
 
 const VILLAINS = [
   { name: '赖床怪',   desc: '喜欢让你赖床的怪兽',   color: '#7f1d1d', body: '#ef4444', hp: 100,  shieldColor: '#94a3b8', armorColor: '#64748b' },
@@ -93,7 +95,7 @@ function drawPlayer(canvas, lv, hp, mg, anim) {
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, 80, 110);
   const lvInfo = LEVELS[Math.min(lv - 1, LEVELS.length - 1)];
-  const mgT = mgThreshold(lv);
+  const mgT = mgThreshold();
   const mgFull = mg >= mgT;
   const mgPct = Math.min(1, mg / mgT);
   const bodyColor = hp >= 70 ? lvInfo.color : hp >= 40 ? '#fef9c3' : '#fecaca';
@@ -826,36 +828,32 @@ export default function App() {
     if (pts < 10) { toast('星星不够！需要10⭐'); return; }
     if (hp >= 100) { toast('小马已经很饱了！'); return; }
     setPts(p => p - 10); setHp(h => Math.min(100, h + 20));
-    sfxFeed(); toast('🍎 小马吃得好开心！');
-    attackAnim(() => {}, 'sunrise');
+    sfxFeed(); toast('🍎 小马吃得好开心！+20体力');
+    attackAnim(() => {}, null);
   }
 
-  function doMagic() {
+  // Fire the ultimate magic blast — only callable when mg is full
+  function fireUltimate() {
     if (hp <= 0) return;
-    const mgT = mgThreshold(lv);
-    if (mg >= mgT) {
-      sfxMagicBeam();
-      const dmg = Math.floor(mgT / 3);
-      magicBeamAnim(() => {
-        applyDamage(dmg, villainIdx, villainHp);
-        toast('💥 魔法大招！造成' + dmg + '点伤害！');
-      });
-      setMg(0);
-      if (lv < 15) {
+    const mgT = mgThreshold();
+    if (mg < mgT) { toast('魔法还没蓄满！继续完成挑战！'); return; }
+    sfxMagicBeam();
+    const dmg = Math.floor(villainHp * 0.45 + 30); // big hit: 45% current hp + 30 flat
+    magicBeamAnim(() => {
+      applyDamage(dmg, villainIdx, villainHp);
+      toast('💥 大招释放！造成' + dmg + '点伤害！');
+    });
+    setMg(0); // drain magic after use
+    // level up on ultimate fire
+    if (lv < 15) {
+      setTimeout(() => {
         setLv(l => {
-          const newLv = l + 1;
+          const newLv = Math.min(l + 1, 15);
           sfxLevelUp();
           toast('✨ 升级！成为' + LEVELS[Math.min(newLv - 1, 14)].name + '！');
           return newLv;
         });
-      }
-    } else {
-      if (pts < 20) { toast('需要20⭐才能学魔法！'); return; }
-      setPts(p => p - 20);
-      setMg(m => Math.min(mgT, m + Math.floor(mgT / 10)));
-      sfxMagicCharge();
-      attackAnim(() => applyDamage(8, villainIdx, villainHp), 'rainbow');
-      toast('✨ 魔法充能中！');
+      }, 800);
     }
   }
 
@@ -864,11 +862,27 @@ export default function App() {
     if (!parent) { toast('请家长开启家长模式后打勾！'); return; }
     if (done.includes(id)) return;
     const t = TASKS.find(t => t.id === id); if (!t) return;
-    const earned = t.double ? t.pts * 2 : t.pts;
-    setDone(d => [...d, id]); setPts(p => p + earned);
+    const earnedPts = t.pts;
+    const earnedMg  = t.double ? t.mg * 2 : t.mg;
+    const mgT = mgThreshold();
+    setDone(d => [...d, id]);
+    setPts(p => p + earnedPts);
+    setMg(m => {
+      const newMg = Math.min(mgT, m + earnedMg);
+      if (newMg >= mgT && m < mgT) {
+        // magic just filled up!
+        setTimeout(() => {
+          sfxMagicCharge();
+          toast('⚡ 魔法已蓄满！快发动大招！');
+        }, 400);
+      }
+      return newMg;
+    });
     sfxTask();
-    attackAnim(() => applyDamage(Math.floor(earned / 3), villainIdx, villainHp), t.attackType);
-    toast('太棒了！获得' + earned + '⭐' + (t.double ? ' 双倍！' : ''));
+    // task attack hits villain directly (small dmg) — immediate feedback
+    const directDmg = Math.floor(earnedPts / 5) + 3;
+    attackAnim(() => applyDamage(directDmg, villainIdx, villainHp), t.attackType);
+    toast(`太棒了！+${earnedPts}⭐  魔法+${earnedMg}✨`);
   }
 
   function nextDay() {
@@ -887,7 +901,7 @@ export default function App() {
   }
 
   const lvInfo = LEVELS[Math.min(lv - 1, LEVELS.length - 1)];
-  const mgT = mgThreshold(lv);
+  const mgT = mgThreshold();
   const mgFull = mg >= mgT;
   const v = VILLAINS[Math.min(villainIdx, VILLAINS.length - 1)];
   const dead = hp <= 0;
@@ -1001,44 +1015,73 @@ export default function App() {
             </div>
           </div>
 
-          {/* STATS */}
+          {/* STATS ROW */}
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 14px 4px', gap: 6 }}>
-            {[['⭐', pts], ['✨ Lv.', lv]].map(([label, val], i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500, border: '0.5px solid #e5e7eb', background: '#f9fafb' }}>
-                {label}<span>{val}</span>
-              </div>
-            ))}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500, border: '0.5px solid #e5e7eb', background: '#f9fafb' }}>
+              ⭐<span>{pts}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500, border: '0.5px solid #e5e7eb', background: '#f9fafb' }}>
+              ✨ Lv.<span>{lv}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500, border: '0.5px solid #e5e7eb', background: '#f9fafb' }}>
+              🗓 第{day}天
+            </div>
           </div>
 
           {/* BARS */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '0 14px 6px' }}>
+            {/* HP */}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#6b7280', marginBottom: 2 }}>
-                <span>🍎 饱食度</span><span>{hp}/100</span>
+                <span>🍎 体力</span><span>{hp}/100</span>
               </div>
               <div style={{ height: 9, background: '#f3f4f6', borderRadius: 9, overflow: 'hidden', border: '0.5px solid #e5e7eb' }}>
                 <div style={{ width: hp + '%', height: '100%', borderRadius: 9, background: hp < 30 ? 'linear-gradient(90deg,#f87171,#ef4444)' : 'linear-gradient(90deg,#4ade80,#22c55e)', transition: 'width 0.5s' }} />
               </div>
             </div>
+            {/* Magic charge — tasks fill this */}
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: mgFull ? '#7c3aed' : '#6b7280', marginBottom: 2, fontWeight: mgFull ? 600 : 400 }}>
-                <span>{mgFull ? '⚡ 魔法已满！可发动大招！' : '✨ 魔法储能'}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, marginBottom: 2, fontWeight: mgFull ? 600 : 400, color: mgFull ? '#7c3aed' : '#6b7280' }}>
+                <span>{mgFull ? '⚡ 大招蓄满！快释放！' : `✨ 魔法蓄能 — 完成挑战来充能`}</span>
                 <span>{mg}/{mgT}</span>
               </div>
-              <div style={{ height: 9, background: '#f3f4f6', borderRadius: 9, overflow: 'hidden', border: '0.5px solid #e5e7eb' }}>
+              <div style={{ height: 9, background: '#f3f4f6', borderRadius: 9, overflow: 'hidden', border: '0.5px solid #e5e7eb', position: 'relative' }}>
                 <div style={{ width: (mg / mgT * 100) + '%', height: '100%', borderRadius: 9, background: mgFull ? 'linear-gradient(90deg,#fbbf24,#f59e0b)' : 'linear-gradient(90deg,#c084fc,#a855f7)', transition: 'width 0.5s' }} />
+                {/* Segment markers every 20% */}
+                {[1,2,3,4].map(i => (
+                  <div key={i} style={{ position: 'absolute', top: 0, left: (i * 20) + '%', width: 1, height: '100%', background: 'rgba(255,255,255,0.5)' }} />
+                ))}
               </div>
             </div>
           </div>
 
           {/* ACTIONS */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, padding: '4px 14px 8px' }}>
-            <button onClick={feedPet} disabled={dead} style={{ padding: '10px 6px', borderRadius: 12, fontSize: 12, fontWeight: 500, border: '0.5px solid #86efac', cursor: dead ? 'not-allowed' : 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, color: '#15803d', background: '#f0fdf4', opacity: dead ? 0.35 : 1 }}>
-              🍎<span>喂食 (-10⭐)</span>
+            {/* Feed — costs 10 stars, restores HP */}
+            <button onClick={feedPet} disabled={dead || pts < 10 || hp >= 100}
+              style={{ padding: '10px 6px', borderRadius: 12, fontSize: 12, fontWeight: 500, border: '0.5px solid #86efac', cursor: (dead || pts < 10 || hp >= 100) ? 'not-allowed' : 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, color: '#15803d', background: '#f0fdf4', opacity: (dead || pts < 10 || hp >= 100) ? 0.4 : 1 }}>
+              🍎
+              <span style={{ fontSize: 11 }}>喂食回血</span>
+              <span style={{ fontSize: 10, color: '#6b7280' }}>-10⭐ / +20体力</span>
             </button>
-            <button onClick={doMagic} disabled={dead} style={{ padding: '10px 6px', borderRadius: 12, fontSize: 12, fontWeight: 500, border: mgFull ? '0.5px solid #fbbf24' : '0.5px solid #d8b4fe', cursor: dead ? 'not-allowed' : 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, color: mgFull ? '#92400e' : '#7e22ce', background: mgFull ? '#fef9c3' : '#faf5ff', opacity: dead ? 0.35 : 1 }}>
-              <span>{mgFull ? '💥' : '✨'}</span>
-              <span>{mgFull ? '发动大招！' : '学魔法 (-20⭐)'}</span>
+            {/* Ultimate — only available when magic full */}
+            <button onClick={fireUltimate} disabled={dead || !mgFull}
+              style={{
+                padding: '10px 6px', borderRadius: 12, fontSize: 12, fontWeight: 600,
+                border: mgFull ? '2px solid #fbbf24' : '0.5px solid #d8b4fe',
+                cursor: (dead || !mgFull) ? 'not-allowed' : 'pointer',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+                color: mgFull ? '#78350f' : '#c4b5fd',
+                background: mgFull ? 'linear-gradient(135deg,#fef9c3,#fde68a)' : '#faf5ff',
+                opacity: dead ? 0.35 : 1,
+                boxShadow: mgFull ? '0 0 12px rgba(251,191,36,0.5)' : 'none',
+                transition: 'all 0.3s',
+              }}>
+              <span style={{ fontSize: 18 }}>{mgFull ? '💥' : '🔮'}</span>
+              <span style={{ fontSize: 11 }}>{mgFull ? '释放大招！' : '魔法蓄能中…'}</span>
+              <span style={{ fontSize: 10, color: mgFull ? '#92400e' : '#a78bfa' }}>
+                {mgFull ? '点击重击敌人！' : `还差 ${mgT - mg} 点`}
+              </span>
             </button>
           </div>
 
