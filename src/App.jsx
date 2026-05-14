@@ -1111,7 +1111,20 @@ export default function App() {
                       {isDone ? '✓' : ''}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 11, color: isDone ? '#9ca3af' : '#111827', textDecoration: isDone ? 'line-through' : 'none' }}>{t.icon} {t.text}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: 11, color: isDone ? '#9ca3af' : '#111827', textDecoration: isDone ? 'line-through' : 'none' }}>
+  <img 
+    src={t.icon} 
+    alt="task icon" 
+    style={{ 
+      width: 20, 
+      height: 20, 
+      objectFit: 'cover', 
+      borderRadius: '4px',
+      filter: isDone ? 'grayscale(100%) opacity(50%)' : 'none' 
+    }} 
+  />
+  <span>{t.text}</span>
+</div>
                       <div style={{ fontSize: 9, color: '#a855f7', marginTop: 1 }}>
                         {atkLabel}{t.sub ? ` · ⚡ ${t.sub}` : ''}
                       </div>
