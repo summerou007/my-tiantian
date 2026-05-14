@@ -1,271 +1,657 @@
-import React, { useState, useEffect } from 'react';
-import { Heart, Star, Zap, CheckCircle, Circle, Sun, Moon, Coffee, Sparkles, Utensils, Trophy, BookOpen, Target, GraduationCap, Crown, Shield, Ghost, Sword, Wind, CloudRain, Flame, Snowflake, CloudLightning, Gem, Infinity, Gift } from 'lucide-react';
+cat > /mnt/user-data/outputs/App.jsx << 'ENDOFFILE'
+import React, { useState, useEffect, useRef } from 'react';
 
-export default function App() {
-  // --- 1. 配置与反派 ---
-  const villains = ["", "赖床小鬼", "牙膏逃兵", "乱丢怪", "分心小蝇", "作业拖拉虫", "电子屏怪", "借口大王", "邋遢大象", "忘词狐狸", "发呆乌龟", "抱怨毒蛇", "急躁老虎", "粗心甲虫", "放弃之影", "终极懒惰大魔王"];
-  const villainEmojis = ["", "😴", "🪥", "🧺", "🪰", "🐛", "📱", "🗣️", "🐘", "🦊", "🐢", "🐍", "🐯", "🪲", "👤", "👺"];
+// ── TASKS ─────────────────────────────────────────────
+const TASKS = [
+  { id: 1, icon: '☀️', text: '听到闹钟立刻起床不赖床', pts: 15, double: false },
+  { id: 2, icon: '🪥', text: '自己刷牙洗脸换衣服', pts: 10, double: false },
+  { id: 3, icon: '🎒', text: '自己准备书包和饭盒', pts: 15, double: false },
+  { id: 4, icon: '📚', text: '完成作业/阅读打卡', pts: 20, double: false },
+  { id: 5, icon: '🌙', text: '闹钟响了立刻上床睡觉', pts: 20, double: false },
+  { id: 6, icon: '🌟', text: '做了自我突破/有进步的事', pts: 15, double: true, sub: '双倍积分！' },
+  { id: 7, icon: '🎯', text: '专注写作业，不发呆不做无关事', pts: 15, double: true, sub: '双倍积分！' },
+  { id: 8, icon: '🧹', text: '整理自己的东西', pts: 10, double: false },
+  { id: 9, icon: '📖', text: '阅读30分钟爸爸妈妈选书', pts: 15, double: false },
+];
 
-  const levelThresholds = [0, 100, 250, 450, 700, 1000, 1350, 1750, 2200, 2700, 3300, 4000, 4800, 5700, 6700, 8000];
+// ── LEVELS (15 levels) ────────────────────────────────
+const LEVELS = [
+  { lv: 1,  name: '小马驹',     color: '#fed7aa', dark: '#f97316' },
+  { lv: 2,  name: '独角小马',   color: '#fce7f3', dark: '#f472b6' },
+  { lv: 3,  name: '彩虹马驹',   color: '#fef9c3', dark: '#eab308' },
+  { lv: 4,  name: '魔法独角兽', color: '#dcfce7', dark: '#22c55e' },
+  { lv: 5,  name: '星光飞马',   color: '#dbeafe', dark: '#3b82f6' },
+  { lv: 6,  name: '幻影独角兽', color: '#ede9fe', dark: '#8b5cf6' },
+  { lv: 7,  name: '火焰战马',   color: '#fef2f2', dark: '#ef4444' },
+  { lv: 8,  name: '冰晶飞马',   color: '#e0f2fe', dark: '#0ea5e9' },
+  { lv: 9,  name: '雷霆神驹',   color: '#fefce8', dark: '#ca8a04' },
+  { lv: 10, name: '星河独角兽', color: '#fdf4ff', dark: '#d946ef' },
+  { lv: 11, name: '时空飞马',   color: '#f0fdf4', dark: '#16a34a' },
+  { lv: 12, name: '宇宙战神',   color: '#fff7ed', dark: '#ea580c' },
+  { lv: 13, name: '彩虹守护者', color: '#fdf2f8', dark: '#ec4899' },
+  { lv: 14, name: '星辰圣马',   color: '#f5f3ff', dark: '#7c3aed' },
+  { lv: 15, name: '彩虹传说',   color: '#ffffff', dark: '#a855f7' },
+];
 
-  const initialTasks = [
-    { id: 1, text: '听到闹钟立刻起床不赖床', points: 15, done: false },
-    { id: 2, text: '自己刷牙洗脸换衣服', points: 10, done: false },
-    { id: 3, text: '自己准备书包和饭盒', points: 15, done: false },
-    { id: 4, text: '完成作业/阅读打卡', points: 20, done: false },
-    { id: 5, text: '闹钟响了立刻上床睡觉', points: 20, done: false },
-    { id: 6, text: '🌟 做了自我突破/进步的事', points: 40, done: false, bonus: "双倍伤害!" },
-    { id: 7, text: '✍️ 写作业非常专注不发呆', points: 35, done: false, bonus: "双倍伤害!" },
-    { id: 8, text: '🧹 整理好自己的私人物品', points: 15, done: false },
-    { id: 9, text: '📖 阅读30分钟父母选的书', points: 20, done: false },
-  ];
+function mgThreshold(lv) { return 600 + (lv - 1) * 100; }
 
-  // --- 2. 状态管理 ---
-  const [points, setPoints] = useState(() => Number(localStorage.getItem('p_pts')) || 0);
-  const [health, setHealth] = useState(() => Number(localStorage.getItem('p_hp')) ?? 80);
-  const [magic, setMagic] = useState(() => Number(localStorage.getItem('p_mg')) || 0);
-  const [level, setLevel] = useState(() => Number(localStorage.getItem('p_lv')) || 1);
-  const [day, setDay] = useState(() => Number(localStorage.getItem('p_dy')) || 1);
-  const [tasks, setTasks] = useState(() => {
-    try {
-      const s = localStorage.getItem('p_tk');
-      if (!s) return initialTasks;
-      const saved = JSON.parse(s);
-      return initialTasks.map(t => {
-        const exist = saved.find(st => st.id === t.id);
-        return exist ? { ...t, done: exist.done } : t;
-      });
-    } catch (e) { return initialTasks; }
+// ── VILLAINS (15 villains) ────────────────────────────
+const VILLAINS = [
+  { name: '赖床怪',   desc: '喜欢让你赖床的怪兽',   color: '#7f1d1d', body: '#ef4444', hp: 100 },
+  { name: '邋遢精',   desc: '让你不收拾东西的妖怪',  color: '#78350f', body: '#f97316', hp: 120 },
+  { name: '拖延魔',   desc: '总叫你拖到明天再做！',  color: '#365314', body: '#84cc16', hp: 140 },
+  { name: '零食鬼',   desc: '让你不好好吃饭的馋鬼',  color: '#7c2d12', body: '#fb923c', hp: 160 },
+  { name: '发呆精',   desc: '让你上课发呆走神！',    color: '#1e3a5f', body: '#60a5fa', hp: 180 },
+  { name: '哭闹王',   desc: '让你乱发脾气的暴君',    color: '#4a044e', body: '#c026d3', hp: 200 },
+  { name: '骗人妖',   desc: '让你说谎欺骗的妖精',    color: '#052e16', body: '#16a34a', hp: 220 },
+  { name: '夜猫怪',   desc: '让你熬夜不睡觉的恶魔',  color: '#1e1b4b', body: '#6366f1', hp: 240 },
+  { name: '乱丢怪',   desc: '让你到处乱丢东西！',    color: '#422006', body: '#d97706', hp: 260 },
+  { name: '偷懒仙',   desc: '让你什么都不想做！',    color: '#0f172a', body: '#64748b', hp: 280 },
+  { name: '骄傲龙',   desc: '让你觉得自己总是对的',  color: '#450a0a', body: '#dc2626', hp: 300 },
+  { name: '嫉妒精',   desc: '让你嫉妒别人的绿妖',    color: '#14532d', body: '#15803d', hp: 320 },
+  { name: '逃避鬼',   desc: '让你逃避困难的幽灵',    color: '#1c1917', body: '#78716c', hp: 340 },
+  { name: '懒虫王',   desc: '懒惰的终极大BOSS！',     color: '#1a1a2e', body: '#4338ca', hp: 380 },
+  { name: '混沌魔王', desc: '所有坏习惯的源头！',     color: '#0f0f0f', body: '#7c3aed', hp: 450 },
+];
+
+// ── AUDIO ─────────────────────────────────────────────
+let actx = null;
+function ac() { if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); return actx; }
+function tone(f, d, type = 'sine', vol = 0.25, delay = 0) {
+  try {
+    const c = ac(), o = c.createOscillator(), g = c.createGain();
+    o.connect(g); g.connect(c.destination);
+    o.type = type; o.frequency.value = f;
+    const t = c.currentTime + delay;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, t + d);
+    o.start(t); o.stop(t + d + 0.05);
+  } catch (e) {}
+}
+function sfxTask()        { tone(523,0.08); tone(659,0.08,'sine',0.25,0.09); tone(784,0.15,'sine',0.25,0.18); }
+function sfxFeed()        { tone(440,0.06,'triangle'); tone(550,0.1,'triangle',0.25,0.08); }
+function sfxMagicCharge() { [300,400,500,600,750,900].forEach((f,i) => tone(f,0.08,'sine',0.2,i*0.055)); }
+function sfxMagicBeam()   { [200,400,800,1200,1600].forEach((f,i) => tone(f,0.15,'square',0.15,i*0.04)); setTimeout(() => { [1600,1200,800].forEach((f,i) => tone(f,0.12,'sine',0.2,i*0.05)); }, 300); }
+function sfxLevelUp()     { [523,659,784,1047,1319].forEach((f,i) => tone(f,0.18,'sine',0.35,i*0.1)); }
+function sfxVillainDead() { [400,350,300,250,200,150].forEach((f,i) => tone(f,0.12,'sawtooth',0.25,i*0.07)); }
+function sfxWin()         { const m=[523,587,659,698,784,880,988,1047]; m.forEach((f,i) => tone(f,0.2,'sine',0.4,i*0.15)); }
+
+// ── HELPERS ───────────────────────────────────────────
+function sn(k, d) { const v = localStorage.getItem(k); return v !== null && !isNaN(Number(v)) ? Number(v) : d; }
+function todayStr() { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+
+// ── CANVAS DRAWING ────────────────────────────────────
+function drawStars(canvas) {
+  if (!canvas) return;
+  canvas.width = canvas.offsetWidth || 420;
+  canvas.height = canvas.offsetHeight || 168;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (let i = 0; i < 60; i++) {
+    const x = Math.random() * canvas.width, y = Math.random() * canvas.height, r = Math.random() * 1.5 + 0.3;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.7 + 0.3})`; ctx.fill();
+  }
+}
+
+function drawPlayer(canvas, lv, hp, mg, anim) {
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, 80, 110);
+  const lvInfo = LEVELS[Math.min(lv - 1, LEVELS.length - 1)];
+  const mgT = mgThreshold(lv);
+  const mgFull = mg >= mgT;
+  const mgPct = Math.min(1, mg / mgT);
+  const bodyColor = hp >= 70 ? lvInfo.color : hp >= 40 ? '#fef9c3' : '#fecaca';
+  const darkColor = hp >= 70 ? lvInfo.dark : '#ef4444';
+
+  if (mgFull) { ctx.shadowColor = '#fbbf24'; ctx.shadowBlur = 20; }
+  else if (mgPct > 0.6) { ctx.shadowColor = lvInfo.dark; ctx.shadowBlur = 10 * mgPct; }
+  else { ctx.shadowBlur = 0; }
+
+  const offsetY = anim === 'jump' ? -18 : anim === 'attack' ? -8 : 0;
+  const ox = anim === 'attack' ? 12 : 0;
+  const y = offsetY;
+
+  // tail
+  ctx.shadowBlur = 0;
+  ctx.beginPath(); ctx.moveTo(15 + ox, 75 + y); ctx.quadraticCurveTo(2, 65 + y, 8, 50 + y);
+  ctx.strokeStyle = darkColor; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.stroke();
+
+  if (mgFull) { ctx.shadowColor = '#fbbf24'; ctx.shadowBlur = 20; }
+  else if (mgPct > 0.6) { ctx.shadowColor = lvInfo.dark; ctx.shadowBlur = 10 * mgPct; }
+
+  // body
+  ctx.beginPath(); ctx.ellipse(40 + ox, 75 + y, 22, 17, 0, 0, Math.PI * 2);
+  ctx.fillStyle = bodyColor; ctx.fill(); ctx.strokeStyle = darkColor; ctx.lineWidth = 1.5; ctx.stroke();
+
+  // neck+head
+  ctx.beginPath(); ctx.ellipse(52 + ox, 58 + y, 13, 15, Math.PI / 8, 0, Math.PI * 2);
+  ctx.fillStyle = bodyColor; ctx.fill(); ctx.strokeStyle = darkColor; ctx.lineWidth = 1.5; ctx.stroke();
+
+  // legs
+  [[26,90],[34,90],[46,90],[54,90]].forEach(([lx, ly]) => {
+    ctx.beginPath(); ctx.moveTo(lx + ox, ly - 12 + y); ctx.lineTo(lx + ox, ly + y);
+    ctx.strokeStyle = darkColor; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.stroke();
+    ctx.beginPath(); ctx.arc(lx + ox, ly + y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = darkColor; ctx.fill();
   });
 
-  const [message, setMessage] = useState('');
-  const [isEnding, setIsEnding] = useState(false);
-  const [isAttacking, setIsAttacking] = useState(false); // 攻击动作
-  const [isHit, setIsHit] = useState(false); // 受击动作
-  const [isSuper, setIsSuper] = useState(false); // 魔法爆发
+  ctx.shadowBlur = 0;
+  // eye
+  ctx.beginPath(); ctx.arc(56 + ox, 52 + y, 3.5, 0, Math.PI * 2); ctx.fillStyle = '#1f2937'; ctx.fill();
+  ctx.beginPath(); ctx.arc(57.5 + ox, 51 + y, 1.2, 0, Math.PI * 2); ctx.fillStyle = 'white'; ctx.fill();
+  // cheek
+  ctx.beginPath(); ctx.ellipse(52 + ox, 57 + y, 3, 2, 0, 0, Math.PI * 2);
+  ctx.fillStyle = `rgba(253,164,175,${hp >= 50 ? 0.9 : 0.4})`; ctx.fill();
+  // mane
+  ctx.beginPath(); ctx.moveTo(44 + ox, 44 + y); ctx.bezierCurveTo(38 + ox, 35 + y, 50 + ox, 30 + y, 52 + ox, 40 + y);
+  ctx.bezierCurveTo(54 + ox, 30 + y, 62 + ox, 32 + y, 60 + ox, 44 + y);
+  ctx.fillStyle = darkColor; ctx.fill();
 
-  // --- 3. 音效与动作 ---
-  const playSound = (type) => {
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const g = ctx.createGain();
-      osc.connect(g); g.connect(ctx.destination);
-      if (type === 'atk') {
-        osc.frequency.setValueAtTime(400, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.1);
-        g.gain.setValueAtTime(0.1, ctx.currentTime);
-        osc.start(); osc.stop(ctx.currentTime + 0.1);
-      } else if (type === 'magic') {
-        osc.frequency.setValueAtTime(100, ctx.currentTime);
-        osc.frequency.linearRampToValueAtTime(2000, ctx.currentTime + 0.5);
-        g.gain.setValueAtTime(0.1, ctx.currentTime);
-        osc.start(); osc.stop(ctx.currentTime + 0.5);
-      }
-    } catch (e) {}
-  };
+  // horn (lv>=2)
+  if (lv >= 2) {
+    ctx.beginPath(); ctx.moveTo(58 + ox, 44 + y); ctx.lineTo(62 + ox, 28 + y); ctx.lineTo(54 + ox, 40 + y);
+    ctx.fillStyle = '#fbbf24'; ctx.fill();
+    if (mgFull) {
+      ctx.shadowColor = '#fbbf24'; ctx.shadowBlur = 15;
+      ctx.beginPath(); ctx.moveTo(62 + ox, 28 + y);
+      for (let i = 0; i < 5; i++) { ctx.lineTo(62 + ox + Math.cos(i * 1.2) * 6, 28 + y - i * 3); }
+      ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+  }
 
-  const triggerAttack = () => {
-    setIsAttacking(true);
-    setTimeout(() => {
-      setIsAttacking(false);
-      setIsHit(true);
-      playSound('atk');
-      setTimeout(() => setIsHit(false), 300);
-    }, 400);
-  };
+  // wings (lv>=5)
+  if (lv >= 5) {
+    ctx.save(); ctx.globalAlpha = 0.7;
+    ctx.beginPath(); ctx.moveTo(22 + ox, 68 + y); ctx.bezierCurveTo(5, 50 + y, 8, 40 + y, 18 + ox, 55 + y);
+    ctx.bezierCurveTo(10, 58 + y, 15, 65 + y, 22 + ox, 68 + y);
+    ctx.fillStyle = lvInfo.color; ctx.fill(); ctx.strokeStyle = lvInfo.dark; ctx.lineWidth = 1; ctx.stroke();
+    ctx.restore();
+  }
 
-  // --- 4. 逻辑钩子 ---
+  // magic particles (lv>=3)
+  if (lv >= 3 && mgPct > 0.3) {
+    const count = Math.floor(mgPct * 6);
+    for (let i = 0; i < count; i++) {
+      const px = 30 + ox + Math.cos(Date.now() / 300 + i) * 20;
+      const py = 60 + y + Math.sin(Date.now() / 300 + i * 1.3) * 15;
+      ctx.beginPath(); ctx.arc(px, py, 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = lvInfo.dark; ctx.fill();
+    }
+  }
+
+  // cosmic aura (lv>=10)
+  if (lv >= 10) {
+    ctx.save(); ctx.globalAlpha = 0.25;
+    ctx.beginPath(); ctx.ellipse(40 + ox, 68 + y, 30, 22, 0, 0, Math.PI * 2);
+    const grad = ctx.createRadialGradient(40 + ox, 68 + y, 5, 40 + ox, 68 + y, 30);
+    grad.addColorStop(0, lvInfo.dark); grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad; ctx.fill(); ctx.restore();
+  }
+}
+
+function drawVillain(canvas, villainIdx, villainHp, flash) {
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, 80, 110);
+  const v = VILLAINS[Math.min(villainIdx, VILLAINS.length - 1)];
+  const hpPct = Math.max(0, villainHp / v.hp);
+
+  if (flash) { ctx.fillStyle = 'rgba(255,50,50,0.5)'; ctx.fillRect(0, 0, 80, 110); }
+
+  // ground shadow
+  ctx.save(); ctx.globalAlpha = 0.3;
+  ctx.beginPath(); ctx.ellipse(40, 105, 22, 6, 0, 0, Math.PI * 2);
+  ctx.fillStyle = '#000'; ctx.fill(); ctx.restore();
+
+  const angry = hpPct < 0.3;
+  if (angry) { ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 15; }
+  else { ctx.shadowColor = v.body; ctx.shadowBlur = 8; }
+
+  const vi = villainIdx % 5;
+  const eyeY = vi === 2 ? 65 : vi === 3 ? 58 : 60;
+
+  if (vi === 0) {
+    ctx.beginPath(); ctx.ellipse(40, 65, 22, 25, 0, 0, Math.PI * 2);
+    ctx.fillStyle = v.body; ctx.fill();
+  } else if (vi === 1) {
+    ctx.beginPath();
+    for (let i = 0; i < 8; i++) {
+      const a = i / 8 * Math.PI * 2, r = i % 2 === 0 ? 28 : 18;
+      if (i === 0) ctx.moveTo(40 + Math.cos(a) * r, 60 + Math.sin(a) * r);
+      else ctx.lineTo(40 + Math.cos(a) * r, 60 + Math.sin(a) * r);
+    }
+    ctx.closePath(); ctx.fillStyle = v.body; ctx.fill();
+  } else if (vi === 2) {
+    ctx.beginPath(); ctx.moveTo(40, 30); ctx.lineTo(65, 90); ctx.lineTo(15, 90); ctx.closePath();
+    ctx.fillStyle = v.body; ctx.fill();
+  } else if (vi === 3) {
+    ctx.beginPath(); ctx.roundRect(18, 38, 44, 52, 8);
+    ctx.fillStyle = v.body; ctx.fill();
+  } else {
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const a = i / 10 * Math.PI * 2 - Math.PI / 2, r = i % 2 === 0 ? 26 : 14;
+      if (i === 0) ctx.moveTo(40 + Math.cos(a) * r, 60 + Math.sin(a) * r);
+      else ctx.lineTo(40 + Math.cos(a) * r, 60 + Math.sin(a) * r);
+    }
+    ctx.closePath(); ctx.fillStyle = v.body; ctx.fill();
+  }
+
+  ctx.shadowBlur = 0;
+  ctx.beginPath(); ctx.arc(33, eyeY, 5, 0, Math.PI * 2); ctx.fillStyle = '#111'; ctx.fill();
+  ctx.beginPath(); ctx.arc(47, eyeY, 5, 0, Math.PI * 2); ctx.fillStyle = '#111'; ctx.fill();
+  if (angry || hpPct < 0.5) {
+    ctx.beginPath(); ctx.moveTo(29, eyeY - 7); ctx.lineTo(37, eyeY - 4);
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(51, eyeY - 7); ctx.lineTo(43, eyeY - 4); ctx.stroke();
+  }
+  ctx.beginPath(); ctx.arc(35, eyeY - 1, 1.5, 0, Math.PI * 2); ctx.fillStyle = 'white'; ctx.fill();
+  ctx.beginPath(); ctx.arc(49, eyeY - 1, 1.5, 0, Math.PI * 2); ctx.fillStyle = 'white'; ctx.fill();
+  ctx.beginPath();
+  if (hpPct < 0.3) { ctx.arc(40, eyeY + 8, 6, 0, Math.PI); ctx.fillStyle = '#ef4444'; ctx.fill(); }
+  else { ctx.moveTo(35, eyeY + 8); ctx.lineTo(45, eyeY + 8); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke(); }
+  ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.font = 'bold 8px system-ui';
+  ctx.textAlign = 'center'; ctx.fillText(v.name, 40, 15);
+}
+
+// ── MAIN COMPONENT ────────────────────────────────────
+export default function App() {
+  const [pts, setPts]               = useState(() => sn('p_pts', 0));
+  const [hp, setHp]                 = useState(() => sn('p_hp', 80));
+  const [mg, setMg]                 = useState(() => sn('p_mg', 0));
+  const [lv, setLv]                 = useState(() => sn('p_lv', 1));
+  const [day, setDay]               = useState(() => sn('p_dy', 1));
+  const [villainIdx, setVillainIdx] = useState(() => sn('p_vi', 0));
+  const [villainHp, setVillainHp]   = useState(() => {
+    const saved = sn('p_vhp', -1);
+    return saved < 0 ? VILLAINS[Math.min(sn('p_vi', 0), VILLAINS.length - 1)].hp : saved;
+  });
+  const [done, setDone]             = useState(() => JSON.parse(localStorage.getItem('p_done') || '[]'));
+  const [lastDate, setLastDate]     = useState(() => localStorage.getItem('p_date') || '');
+  const [parent, setParent]         = useState(false);
+  const [message, setMessage]       = useState('');
+  const [gameWon, setGameWon]       = useState(false);
+  const [playerAnim, setPlayerAnim] = useState('idle');
+  const [villainFlash, setVillainFlash] = useState(false);
+  const [showBeam, setShowBeam]     = useState(false);
+
+  const playerCanvasRef  = useRef(null);
+  const villainCanvasRef = useRef(null);
+  const starsCanvasRef   = useRef(null);
+  const beamCanvasRef    = useRef(null);
+  const msgTimer         = useRef(null);
+
+  // ── SAVE ────────────────────────────────────────────
   useEffect(() => {
-    localStorage.setItem('p_pts', points);
-    localStorage.setItem('p_hp', health);
-    localStorage.setItem('p_mg', magic);
-    localStorage.setItem('p_lv', level);
+    localStorage.setItem('p_pts', pts);
+    localStorage.setItem('p_hp', hp);
+    localStorage.setItem('p_mg', mg);
+    localStorage.setItem('p_lv', lv);
     localStorage.setItem('p_dy', day);
-    localStorage.setItem('p_tk', JSON.stringify(tasks));
+    localStorage.setItem('p_vi', villainIdx);
+    localStorage.setItem('p_vhp', villainHp);
+    localStorage.setItem('p_done', JSON.stringify(done));
+    localStorage.setItem('p_date', lastDate);
+  }, [pts, hp, mg, lv, day, villainIdx, villainHp, done, lastDate]);
 
-    if (magic >= 100) {
-      setIsSuper(true);
-      setMagic(0);
-      setHealth(100);
-      setPoints(p => p + 100);
-      playSound('magic');
-      setMessage("✨ 奥义爆发：全屏净化！经验大涨！");
-      setTimeout(() => setIsSuper(false), 3000);
+  // ── AUTO RESET ──────────────────────────────────────
+  useEffect(() => {
+    const today = todayStr();
+    if (lastDate && lastDate !== today && hp > 0) {
+      setHp(h => Math.max(0, h - 40));
+      setDay(d => d + 1);
+      setDone([]);
+      setLastDate(today);
+      toast(hp <= 40 ? '😭 小马饿晕了...' : '新的一天！加油！');
     }
+    if (!lastDate) setLastDate(today);
+    // migrate old task format
+    try {
+      const old = localStorage.getItem('p_tk');
+      if (old) { localStorage.removeItem('p_tk'); }
+    } catch (e) {}
+  }, []);
 
-    if (level === 15 && points >= levelThresholds[15]) {
-      setIsEnding(true);
-    } else if (points >= levelThresholds[level] && level < 15) {
-      setLevel(l => l + 1);
-      setMessage(`💥 成功击败怪兽，升级到 LV.${level+1}!`);
+  // ── STARS ───────────────────────────────────────────
+  useEffect(() => { drawStars(starsCanvasRef.current); }, []);
+
+  // ── DRAW LOOP ───────────────────────────────────────
+  useEffect(() => {
+    drawPlayer(playerCanvasRef.current, lv, hp, mg, playerAnim);
+  }, [lv, hp, mg, playerAnim]);
+
+  useEffect(() => {
+    drawVillain(villainCanvasRef.current, villainIdx, villainHp, villainFlash);
+  }, [villainIdx, villainHp, villainFlash]);
+
+  // animate magic particles
+  useEffect(() => {
+    if (lv < 3) return;
+    const id = setInterval(() => {
+      drawPlayer(playerCanvasRef.current, lv, hp, mg, 'idle');
+    }, 500);
+    return () => clearInterval(id);
+  }, [lv, hp, mg]);
+
+  // ── TOAST ───────────────────────────────────────────
+  function toast(msg) {
+    setMessage(msg);
+    if (msgTimer.current) clearTimeout(msgTimer.current);
+    msgTimer.current = setTimeout(() => setMessage(''), 3000);
+  }
+
+  // ── ATTACK ANIM ─────────────────────────────────────
+  function attackAnim(onHit) {
+    const phases = ['idle', 'jump', 'attack', 'attack', 'jump', 'idle'];
+    let i = 0;
+    function step() {
+      setPlayerAnim(phases[Math.min(i, phases.length - 1)]);
+      if (i === 2) { setVillainFlash(true); onHit(); }
+      if (i === 3) setVillainFlash(false);
+      i++;
+      if (i < phases.length) setTimeout(step, 80);
+      else setPlayerAnim('idle');
     }
-  }, [points, health, magic, level, day, tasks]);
+    step();
+  }
 
-  const toggleTask = (id) => {
-    if (health <= 0) return;
-    setTasks(prev => prev.map(t => {
-      if (t.id === id && !t.done) {
-        setPoints(p => p + t.points);
-        triggerAttack();
-        return { ...t, done: true };
+  // ── MAGIC BEAM ──────────────────────────────────────
+  function magicBeamAnim(onDone) {
+    const bc = beamCanvasRef.current;
+    if (!bc) { onDone(); return; }
+    bc.width = bc.offsetWidth || 420;
+    bc.height = bc.offsetHeight || 168;
+    setShowBeam(true);
+    const ctx = bc.getContext('2d');
+    const lvInfo = LEVELS[Math.min(lv - 1, LEVELS.length - 1)];
+    let frame = 0;
+    function step() {
+      ctx.clearRect(0, 0, bc.width, bc.height);
+      const progress = frame / 20;
+      const beamW = bc.width * progress;
+      if (lv >= 10) {
+        ['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#a855f7'].forEach((col, i) => {
+          ctx.beginPath(); ctx.moveTo(0, 60 + i * 8 - 24); ctx.lineTo(beamW, 60 + i * 8 - 24);
+          ctx.strokeStyle = col; ctx.lineWidth = 5; ctx.globalAlpha = 0.7; ctx.stroke();
+        });
+      } else {
+        const grad = ctx.createLinearGradient(0, 0, beamW, 0);
+        grad.addColorStop(0, lvInfo.dark); grad.addColorStop(1, '#fbbf24');
+        ctx.beginPath(); ctx.moveTo(0, 80); ctx.lineTo(beamW, 80);
+        ctx.strokeStyle = grad; ctx.lineWidth = 12; ctx.globalAlpha = 0.8; ctx.stroke();
       }
-      return t;
-    }));
-  };
+      ctx.globalAlpha = 1;
+      if (frame > 15) {
+        ctx.beginPath(); ctx.arc(bc.width - 40, 80, (frame - 15) * 8, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,200,0,${0.6 - (frame - 15) * 0.06})`; ctx.fill();
+      }
+      frame++;
+      if (frame < 25) requestAnimationFrame(step);
+      else {
+        setShowBeam(false); ctx.clearRect(0, 0, bc.width, bc.height);
+        setVillainFlash(true); setTimeout(() => { setVillainFlash(false); onDone(); }, 200);
+      }
+    }
+    step();
+  }
 
-  // --- 5. 渲染组件 ---
-  if (isEnding) return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500 flex flex-col items-center justify-center p-8 text-white text-center">
-      <div className="text-[120px] mb-8 animate-bounce">👑🦄🌈</div>
-      <h1 className="text-6xl font-black mb-6">全胜！</h1>
-      <p className="text-2xl font-bold">甜甜打败了所有坏习惯！你是最棒的彩虹战士！</p>
-      <button onClick={() => { localStorage.clear(); window.location.reload(); }} className="mt-10 bg-white text-pink-600 px-12 py-4 rounded-full font-black text-xl">重新开启传说</button>
-    </div>
-  );
+  // ── DAMAGE VILLAIN ──────────────────────────────────
+  function applyDamage(dmg, currentVillainIdx, currentVillainHp) {
+    const newHp = Math.max(0, currentVillainHp - dmg);
+    setVillainHp(newHp);
+    if (newHp <= 0) {
+      sfxVillainDead();
+      setTimeout(() => {
+        const v = VILLAINS[currentVillainIdx];
+        if (currentVillainIdx >= VILLAINS.length - 1) {
+          setGameWon(true); sfxWin();
+        } else {
+          const nextIdx = currentVillainIdx + 1;
+          setVillainIdx(nextIdx);
+          setVillainHp(VILLAINS[nextIdx].hp);
+          toast('⚔️ 打败了' + v.name + '！新敌人：' + VILLAINS[nextIdx].name + '！');
+        }
+      }, 600);
+    }
+  }
+
+  // ── ACTIONS ─────────────────────────────────────────
+  function feedPet() {
+    if (hp <= 0) return;
+    if (pts < 10) { toast('星星不够！需要10⭐'); return; }
+    if (hp >= 100) { toast('小马已经很饱了！'); return; }
+    setPts(p => p - 10); setHp(h => Math.min(100, h + 20));
+    sfxFeed(); toast('🍎 小马吃得好开心！');
+    attackAnim(() => {});
+  }
+
+  function doMagic() {
+    if (hp <= 0) return;
+    const mgT = mgThreshold(lv);
+    if (mg >= mgT) {
+      sfxMagicBeam();
+      const dmg = Math.floor(mgT / 3);
+      magicBeamAnim(() => {
+        applyDamage(dmg, villainIdx, villainHp);
+        toast('💥 魔法大招！造成' + dmg + '点伤害！');
+      });
+      setMg(0);
+      // check level up
+      if (lv < 15) {
+        setLv(l => {
+          const newLv = l + 1;
+          sfxLevelUp();
+          toast('✨ 升级！成为' + LEVELS[Math.min(newLv - 1, 14)].name + '！');
+          return newLv;
+        });
+      }
+    } else {
+      if (pts < 20) { toast('需要20⭐才能学魔法！'); return; }
+      setPts(p => p - 20);
+      setMg(m => Math.min(mgT, m + Math.floor(mgT / 10)));
+      sfxMagicCharge();
+      attackAnim(() => applyDamage(8, villainIdx, villainHp));
+      toast('✨ 魔法充能中！');
+    }
+  }
+
+  function toggleTask(id) {
+    if (hp <= 0) return;
+    if (!parent) { toast('请家长开启家长模式后打勾！'); return; }
+    if (done.includes(id)) return;
+    const t = TASKS.find(t => t.id === id); if (!t) return;
+    const earned = t.double ? t.pts * 2 : t.pts;
+    setDone(d => [...d, id]); setPts(p => p + earned);
+    sfxTask();
+    attackAnim(() => applyDamage(Math.floor(earned / 3), villainIdx, villainHp));
+    toast('太棒了！获得' + earned + '⭐' + (t.double ? ' 双倍！' : ''));
+  }
+
+  function nextDay() {
+    if (hp <= 0) return;
+    setHp(h => Math.max(0, h - 40));
+    setDay(d => d + 1); setDone([]); setLastDate(todayStr());
+    toast('晚安！明天继续加油！');
+  }
+
+  function restartGame() {
+    localStorage.clear();
+    setPts(0); setHp(80); setMg(0); setLv(1); setDay(1);
+    setVillainIdx(0); setVillainHp(VILLAINS[0].hp);
+    setDone([]); setLastDate(todayStr()); setGameWon(false);
+    toast('小马重生了！加油！');
+  }
+
+  // ── COMPUTED ─────────────────────────────────────────
+  const lvInfo = LEVELS[Math.min(lv - 1, LEVELS.length - 1)];
+  const mgT = mgThreshold(lv);
+  const mgFull = mg >= mgT;
+  const v = VILLAINS[Math.min(villainIdx, VILLAINS.length - 1)];
+  const dead = hp <= 0;
+  const hdrColors = [
+    ['#f472b6','#a855f7'],['#f472b6','#ec4899'],['#fbbf24','#f59e0b'],
+    ['#4ade80','#22c55e'],['#60a5fa','#3b82f6'],['#a78bfa','#8b5cf6'],
+    ['#f87171','#ef4444'],['#38bdf8','#0ea5e9'],['#fde047','#ca8a04'],
+    ['#e879f9','#d946ef'],['#34d399','#10b981'],['#fb923c','#ea580c'],
+    ['#f472b6','#ec4899'],['#a78bfa','#7c3aed'],['#c084fc','#a855f7'],
+  ];
+  const [c1, c2] = hdrColors[Math.min(lv - 1, 14)];
 
   return (
-    <div className="min-h-screen bg-slate-950 p-2 font-sans text-white flex flex-col">
-      <div className="max-w-md mx-auto w-full bg-slate-900 rounded-[3rem] shadow-2xl border-4 border-slate-800 overflow-hidden relative flex flex-col h-full">
-        
-        {/* 顶部标题与信息 */}
-        <div className="bg-gradient-to-r from-indigo-700 to-purple-800 py-4 text-center">
-          <div className="flex justify-around items-center px-4">
-            <div className="text-left">
-              <p className="text-[10px] text-indigo-300 font-bold uppercase">Player: 甜甜</p>
-              <p className="text-sm font-black italic">PONY HERO</p>
-            </div>
-            <div className="bg-black/30 px-4 py-1 rounded-full border border-white/10">
-              <span className="text-yellow-400 font-black">LV. {level}</span>
-            </div>
-            <div className="text-right">
-              <p className="text-[10px] text-indigo-300 font-bold uppercase">Day</p>
-              <p className="text-sm font-black">{day}</p>
-            </div>
+    <div className="min-h-screen bg-pink-50 p-2" style={{ fontFamily: 'system-ui, sans-serif' }}>
+      {/* WIN SCREEN */}
+      {gameWon && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'linear-gradient(135deg,#fdf4ff,#ede9fe,#fce7f3)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 20 }}>
+          <div style={{ fontSize: 64, marginBottom: 12 }}>🌈</div>
+          <div style={{ fontSize: 22, fontWeight: 700, background: 'linear-gradient(90deg,#f472b6,#a855f7,#3b82f6,#10b981)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: 12, lineHeight: 1.3 }}>
+            恭喜甜甜！<br />你成功打败了<br />所有不良习惯！
           </div>
+          <div style={{ height: 8, borderRadius: 4, background: 'linear-gradient(90deg,#ef4444,#f97316,#eab308,#22c55e,#3b82f6,#a855f7,#ec4899)', margin: '12px 0', width: 200 }} />
+          <div style={{ fontSize: 14, color: '#7c3aed', marginBottom: 20, lineHeight: 1.6 }}>
+            你就是最强的彩虹！🦄✨<br />所有坏习惯怪兽都被你消灭了<br />你是最棒的小孩！
+          </div>
+          <div style={{ fontSize: 36, margin: '8px 0' }}>🏆⭐🌟💫✨🎉🎊🦄🌈</div>
+          <button onClick={restartGame} style={{ padding: '12px 32px', background: 'linear-gradient(135deg,#f472b6,#a855f7)', color: 'white', border: 'none', borderRadius: 20, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+            重新开始新旅程 🌟
+          </button>
         </div>
+      )}
 
-        {/* 核心对战场区 (Q宠对战风) */}
-        <div className="relative h-72 bg-gradient-to-b from-indigo-900 to-slate-900 border-b-4 border-black/50 overflow-hidden">
-          
-          {/* 背景装饰：流星 */}
-          {isSuper && <div className="absolute inset-0 bg-white/20 animate-pulse z-40" />}
-          
-          {/* 坏习惯怪兽 (右侧) */}
-          <div className={`absolute right-8 top-16 transition-all duration-300 ${isHit ? 'translate-x-4 scale-110' : ''}`}>
-             <div className="flex flex-col items-center">
-                <div className={`text-7xl drop-shadow-[0_0_15px_rgba(255,0,0,0.5)] ${isHit ? 'animate-ping' : 'animate-pulse'}`}>
-                  {villainEmojis[level]}
-                </div>
-                <div className="mt-4 bg-black/60 px-4 py-1 rounded-full border border-red-500/50">
-                   <p className="text-[10px] text-red-400 font-black tracking-widest uppercase">Monster: {villains[level]}</p>
-                </div>
-                {/* 怪兽血条 */}
-                <div className="w-24 h-2 bg-slate-800 rounded-full mt-2 overflow-hidden border border-white/10">
-                   <div className="h-full bg-red-600 transition-all duration-500" style={{ width: `${100 - (points/levelThresholds[level]*100)}%` }}></div>
-                </div>
-             </div>
+      <div style={{ maxWidth: 420, margin: '0 auto' }}>
+        <div style={{ background: 'white', borderRadius: 20, overflow: 'hidden', border: '0.5px solid #e5e7eb' }}>
+          {/* HEADER */}
+          <div style={{ background: `linear-gradient(135deg,${c1},${c2})`, textAlign: 'center', padding: '14px 12px 22px', position: 'relative' }}>
+            <h1 style={{ fontSize: 16, fontWeight: 600, color: 'white', letterSpacing: 1 }}>🌟 星光小马养成记 🌟</h1>
+            <div style={{ position: 'absolute', bottom: -12, left: '50%', transform: 'translateX(-50%)', background: 'white', color: '#a855f7', padding: '3px 16px', borderRadius: 20, fontSize: 11, fontWeight: 500, border: '0.5px solid #e9d5ff', whiteSpace: 'nowrap' }}>
+              第 {day} 天 · {lvInfo.name}
+            </div>
           </div>
 
-          {/* 甜甜 (左侧全身像) */}
-          <div className={`absolute left-8 bottom-12 transition-all duration-500 z-10 ${isAttacking ? 'translate-x-32 -translate-y-12' : ''}`}>
-             <div className="flex flex-col items-center relative">
-                {/* 魔法光环 */}
-                <div 
-                  className={`absolute -inset-8 rounded-full border-2 border-dashed border-purple-400/30 transition-all ${isSuper ? 'animate-spin-fast border-yellow-400' : 'animate-spin-slow'}`}
-                  style={{ boxShadow: `0 0 ${20 + (level*3)}px rgba(168, 85, 247, 0.5)` }}
-                />
-                
-                {/* 小马全身模拟 */}
-                <div className="relative">
-                  <div className={`text-8xl drop-shadow-2xl ${health < 30 ? 'grayscale' : ''}`}>
-                    {level < 4 ? '🐴' : level < 7 ? '🦄' : level < 10 ? '🦄✨' : level < 13 ? '👑🦄' : '👑🦄🌈'}
-                  </div>
-                  {/* 根据饱腹度显示心情 */}
-                  <div className="absolute -top-4 -right-4 bg-white rounded-full p-1 text-xl shadow-lg border border-purple-100">
-                    {health < 30 ? '😫' : '😊'}
-                  </div>
-                </div>
-
-                <div className="mt-4 bg-purple-600/80 px-4 py-1 rounded-full shadow-lg border border-white/20">
-                   <p className="text-[10px] font-black uppercase tracking-widest">STarlight Form</p>
-                </div>
-             </div>
-          </div>
-
-          {/* 提示气泡 */}
+          {/* TOAST */}
           {message && (
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-white text-indigo-700 px-6 py-2 rounded-2xl font-black text-xs shadow-2xl animate-bounce border-2 border-indigo-500">
+            <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', background: 'white', border: '1.5px solid #f472b6', color: '#be185d', padding: '5px 16px', borderRadius: 20, fontSize: 12, fontWeight: 500, zIndex: 999, whiteSpace: 'nowrap' }}>
               {message}
             </div>
           )}
-        </div>
 
-        {/* 状态数据区 */}
-        <div className="p-4 grid grid-cols-2 gap-4 bg-slate-800/50">
-          <div className="space-y-1">
-            <div className="flex justify-between text-[9px] font-black text-slate-400"><span>HP (Energy)</span><span>{health}%</span></div>
-            <div className="h-3 bg-black rounded-full p-0.5 border border-white/5">
-              <div className={`h-full rounded-full transition-all duration-1000 ${health > 30 ? 'bg-green-500' : 'bg-red-600'}`} style={{ width: `${health}%` }}></div>
+          {/* ARENA */}
+          <div style={{ position: 'relative', height: 200, background: 'linear-gradient(180deg,#1e1b4b 0%,#312e81 40%,#4c1d95 70%,#7c3aed 100%)', overflow: 'hidden', marginTop: 12 }}>
+            <canvas ref={starsCanvasRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: 168 }} />
+            <canvas ref={beamCanvasRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: 168, pointerEvents: 'none', display: showBeam ? 'block' : 'none', zIndex: 10 }} />
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 32, background: 'linear-gradient(180deg,#7c3aed,#5b21b6)', borderTop: '2px solid #a78bfa' }} />
+            {/* Player */}
+            <div style={{ position: 'absolute', bottom: 32, left: 16, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ width: 70, height: 5, background: 'rgba(0,0,0,0.4)', borderRadius: 5, overflow: 'hidden', marginBottom: 2 }}>
+                <div style={{ width: hp + '%', height: '100%', background: 'linear-gradient(90deg,#4ade80,#22c55e)', borderRadius: 5, transition: 'width 0.4s' }} />
+              </div>
+              <canvas ref={playerCanvasRef} width={80} height={110} />
+              <div style={{ width: 50, height: 8, background: 'rgba(0,0,0,0.4)', borderRadius: '50%', marginTop: -4 }} />
+              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>甜甜 Lv.{lv}</div>
+            </div>
+            {/* Villain */}
+            <div style={{ position: 'absolute', bottom: 32, right: 16, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ width: 70, height: 5, background: 'rgba(0,0,0,0.4)', borderRadius: 5, overflow: 'hidden', marginBottom: 2 }}>
+                <div style={{ width: (Math.max(0, villainHp / v.hp) * 100) + '%', height: '100%', background: 'linear-gradient(90deg,#f87171,#ef4444)', borderRadius: 5, transition: 'width 0.4s' }} />
+              </div>
+              <canvas ref={villainCanvasRef} width={80} height={110} />
+              <div style={{ width: 50, height: 8, background: 'rgba(0,0,0,0.4)', borderRadius: '50%', marginTop: -4 }} />
+              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{v.name}</div>
             </div>
           </div>
-          <div className="space-y-1">
-            <div className="flex justify-between text-[9px] font-black text-slate-400"><span>MP (Magic)</span><span>{magic}%</span></div>
-            <div className="h-3 bg-black rounded-full p-0.5 border border-white/5">
-              <div className="h-full rounded-full bg-indigo-500 shadow-[0_0_10px_#6366f1] transition-all duration-500" style={{ width: `${magic}%` }}></div>
-            </div>
-          </div>
-        </div>
 
-        {/* 操作按钮区 */}
-        <div className="p-4 grid grid-cols-2 gap-3">
-          <button 
-            onClick={() => { if(points < 10) return setMessage("Stars Low!"); setPoints(p => p - 10); setHealth(h => Math.min(100, h+20)); }} 
-            className="bg-slate-800 border-b-4 border-slate-950 p-3 rounded-2xl flex items-center justify-center space-x-2 active:border-b-0 active:translate-y-1 transition-all"
-          >
-            <Utensils className="text-green-500" /> <span className="font-black text-sm text-green-400">Heal</span>
-          </button>
-          <button 
-            onClick={() => { if(points < 20) return setMessage("Stars Low!"); setPoints(p => p - 20); setMagic(m => m + 25); }} 
-            className="bg-slate-800 border-b-4 border-slate-950 p-3 rounded-2xl flex items-center justify-center space-x-2 active:border-b-0 active:translate-y-1 transition-all"
-          >
-            <Zap className="text-purple-500" /> <span className="font-black text-sm text-purple-400">Magic</span>
-          </button>
-        </div>
-
-        {/* 任务列表 (滚动区) */}
-        <div className="flex-1 overflow-y-auto px-4 pb-4">
-          <div className="space-y-2">
-            {tasks.map(t => (
-              <div 
-                key={t.id} 
-                onClick={() => toggleTask(t.id)} 
-                className={`p-3 rounded-2xl flex items-center justify-between transition-all border-2 ${t.done ? 'bg-black/20 border-transparent opacity-20' : 'bg-slate-800 border-slate-700 shadow-lg'}`}
-              >
-                <div className="flex items-center space-x-3">
-                  {t.done ? <Sword className="text-slate-600 w-4 h-4" /> : <Sword className="text-indigo-400 w-4 h-4 animate-pulse" />}
-                  <div className="text-[11px] font-bold tracking-tight">{t.text}</div>
-                </div>
-                <div className="text-yellow-500 font-black text-xs">+{t.points}</div>
+          {/* STATS */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 14px 4px', gap: 6 }}>
+            {[['⭐', pts], ['✨ Lv.', lv]].map(([label, val], i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500, border: '0.5px solid #e5e7eb', background: '#f9fafb' }}>
+                {label}<span>{val}</span>
               </div>
             ))}
           </div>
-        </div>
 
-        {/* 底部导航 */}
-        <div className="p-4 bg-slate-950">
-          <button onClick={() => { setHealth(h => Math.max(0, h-40)); setDay(d => d+1); setTasks(initialTasks); }} className="w-full bg-indigo-600 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">
-             Sleep & Save
-          </button>
+          {/* BARS */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '0 14px 6px' }}>
+            {/* HP bar */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#6b7280', marginBottom: 2 }}>
+                <span>🍎 饱食度</span><span>{hp}/100</span>
+              </div>
+              <div style={{ height: 9, background: '#f3f4f6', borderRadius: 9, overflow: 'hidden', border: '0.5px solid #e5e7eb' }}>
+                <div style={{ width: hp + '%', height: '100%', borderRadius: 9, background: hp < 30 ? 'linear-gradient(90deg,#f87171,#ef4444)' : 'linear-gradient(90deg,#4ade80,#22c55e)', transition: 'width 0.5s' }} />
+              </div>
+            </div>
+            {/* Magic bar */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: mgFull ? '#7c3aed' : '#6b7280', marginBottom: 2, fontWeight: mgFull ? 600 : 400 }}>
+                <span>{mgFull ? '⚡ 魔法已满！可发动大招！' : '✨ 魔法储能'}</span>
+                <span>{mg}/{mgT}</span>
+              </div>
+              <div style={{ height: 9, background: '#f3f4f6', borderRadius: 9, overflow: 'hidden', border: '0.5px solid #e5e7eb' }}>
+                <div style={{ width: (mg / mgT * 100) + '%', height: '100%', borderRadius: 9, background: mgFull ? 'linear-gradient(90deg,#fbbf24,#f59e0b)' : 'linear-gradient(90deg,#c084fc,#a855f7)', transition: 'width 0.5s' }} />
+              </div>
+            </div>
+          </div>
+
+          {/* ACTIONS */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, padding: '4px 14px 8px' }}>
+            <button onClick={feedPet} disabled={dead} style={{ padding: '10px 6px', borderRadius: 12, fontSize: 12, fontWeight: 500, border: '0.5px solid #86efac', cursor: dead ? 'not-allowed' : 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, color: '#15803d', background: '#f0fdf4', opacity: dead ? 0.35 : 1 }}>
+              🍎<span>喂食 (-10⭐)</span>
+            </button>
+            <button onClick={doMagic} disabled={dead} style={{ padding: '10px 6px', borderRadius: 12, fontSize: 12, fontWeight: 500, border: mgFull ? '0.5px solid #fbbf24' : '0.5px solid #d8b4fe', cursor: dead ? 'not-allowed' : 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, color: mgFull ? '#92400e' : '#7e22ce', background: mgFull ? '#fef9c3' : '#faf5ff', opacity: dead ? 0.35 : 1 }}>
+              <span>{mgFull ? '💥' : '✨'}</span>
+              <span>{mgFull ? '发动大招！' : '学魔法 (-20⭐)'}</span>
+            </button>
+          </div>
+
+          {/* TASKS */}
+          <div style={{ borderTop: '0.5px solid #e5e7eb', padding: '8px 14px' }}>
+            <div style={{ fontSize: 12, fontWeight: 500, color: '#6b7280', marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>今日挑战</span>
+              <button onClick={() => { setParent(p => !p); toast(parent ? '家长模式关闭' : '家长模式开启！'); }}
+                style={{ fontSize: 10, padding: '2px 9px', borderRadius: 10, border: '0.5px solid #e5e7eb', cursor: 'pointer', background: parent ? '#fef3c7' : '#f9fafb', color: parent ? '#92400e' : '#6b7280', borderColor: parent ? '#fcd34d' : '#e5e7eb' }}>
+                {parent ? '🔓 家长模式已开' : '家长模式'}
+              </button>
+            </div>
+            {dead ? (
+              <div style={{ textAlign: 'center', padding: 8 }}>
+                <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 8 }}>小马饿晕了 😭</p>
+                <button onClick={restartGame} style={{ width: '100%', background: '#f472b6', color: 'white', border: 'none', padding: 11, borderRadius: 12, fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>让小马复活 🐴</button>
+              </div>
+            ) : (
+              TASKS.map(t => {
+                const isDone = done.includes(t.id);
+                const earned = t.double ? t.pts * 2 : t.pts;
+                return (
+                  <div key={t.id} onClick={() => toggleTask(t.id)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 9px', borderRadius: 10, border: '0.5px solid #e5e7eb', marginBottom: 5, cursor: 'pointer', background: isDone ? '#f9fafb' : 'white', opacity: isDone ? 0.45 : 1 }}>
+                    <div style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid ' + (isDone ? '#22c55e' : '#d1d5db'), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 10, background: isDone ? '#22c55e' : 'transparent', color: 'white' }}>
+                      {isDone ? '✓' : ''}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 11, color: isDone ? '#9ca3af' : '#111827', textDecoration: isDone ? 'line-through' : 'none' }}>{t.icon} {t.text}</div>
+                      {t.sub && <div style={{ fontSize: 9, color: '#a855f7', marginTop: 1 }}>⚡ {t.sub}</div>}
+                    </div>
+                    <span style={{ fontSize: 10, fontWeight: 500, padding: '2px 6px', borderRadius: 8, color: t.double ? '#7c3aed' : '#d97706', background: t.double ? '#ede9fe' : '#fef9c3' }}>
+                      +{earned}⭐
+                    </span>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* FOOTER */}
+          <div style={{ padding: '8px 14px 14px', borderTop: '0.5px solid #e5e7eb' }}>
+            <button onClick={nextDay} disabled={dead} style={{ width: '100%', background: '#818cf8', color: 'white', border: 'none', padding: 11, borderRadius: 12, fontSize: 13, fontWeight: 500, cursor: dead ? 'not-allowed' : 'pointer', opacity: dead ? 0.35 : 1 }}>
+              🌙 睡觉啦！结束今天
+            </button>
+          </div>
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes spin-fast { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .animate-spin-slow { animation: spin-slow 8s linear infinite; }
-        .animate-spin-fast { animation: spin-fast 1s linear infinite; }
-      `}</style>
     </div>
   );
 }
+ENDOFFILE
+echo "Done"
