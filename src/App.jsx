@@ -1,16 +1,27 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-// mg = magic charge per task completion
+// 1. 必须有这9行引入代码，确保后缀是 .jpg
+import icon1 from './icon1.jpg';
+import icon2 from './icon2.jpg';
+import icon3 from './icon3.jpg';
+import icon4 from './icon4.jpg';
+import icon5 from './icon5.jpg';
+import icon6 from './icon6.jpg';
+import icon7 from './icon7.jpg';
+import icon8 from './icon8.jpg';
+import icon9 from './icon9.jpg';
+
+// 2. 这里的 icon1 到 icon9 千万不能加引号！
 const TASKS = [
-  { id: 1, icon: '☀️', text: '听到闹钟立刻起床不赖床', pts: 15, mg: 80,  double: false, attackType: 'sunrise' },
-  { id: 2, icon: '🪥', text: '自己刷牙洗脸换衣服',     pts: 10, mg: 50,  double: false, attackType: 'bubble' },
-  { id: 3, icon: '🎒', text: '自己准备书包和饭盒',     pts: 15, mg: 70,  double: false, attackType: 'star_throw' },
-  { id: 4, icon: '📚', text: '完成作业/阅读打卡',      pts: 20, mg: 120, double: false, attackType: 'book_blast' },
-  { id: 5, icon: '🌙', text: '闹钟响了立刻上床睡觉',   pts: 20, mg: 120, double: false, attackType: 'moon_beam' },
-  { id: 6, icon: '🌟', text: '做了自我突破/有进步的事', pts: 15, mg: 150, double: true,  sub: '双倍魔法！', attackType: 'rainbow' },
-  { id: 7, icon: '🎯', text: '专注写作业，不发呆不做无关事', pts: 15, mg: 150, double: true, sub: '双倍魔法！', attackType: 'laser' },
-  { id: 8, icon: '🧹', text: '整理自己的东西',         pts: 10, mg: 50,  double: false, attackType: 'whirlwind' },
-  { id: 9, icon: '📖', text: '阅读30分钟爸爸妈妈选书', pts: 15, mg: 80,  double: false, attackType: 'book_blast' },
+  { id: 1, icon: icon1, text: '听到闹钟立刻起床不赖床', pts: 15, double: false, attackType: 'sunrise' },
+  { id: 2, icon: icon2, text: '自己刷牙洗脸换衣服', pts: 10, double: false, attackType: 'bubble' },
+  { id: 3, icon: icon3, text: '自己准备书包和饭盒', pts: 15, double: false, attackType: 'star_throw' },
+  { id: 4, icon: icon4, text: '完成作业/阅读打卡', pts: 20, double: false, attackType: 'book_blast' },
+  { id: 5, icon: icon5, text: '闹钟响了立刻上床睡觉', pts: 20, double: false, attackType: 'moon_beam' },
+  { id: 6, icon: icon6, text: '做了自我突破/有进步的事', pts: 15, double: true, sub: '双倍积分！', attackType: 'rainbow' },
+  { id: 7, icon: icon7, text: '专注写作业，不发呆不做无关事', pts: 15, double: true, sub: '双倍积分！', attackType: 'laser' },
+  { id: 8, icon: icon8, text: '整理自己的东西', pts: 10, double: false, attackType: 'whirlwind' },
+  { id: 9, icon: icon9, text: '阅读30分钟爸爸妈妈选书', pts: 15, double: false, attackType: 'book_blast' },
 ];
 
 const LEVELS = [
