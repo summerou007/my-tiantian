@@ -10,7 +10,25 @@ import icon6 from './icon6.jpg';
 import icon7 from './icon7.jpg';
 import icon8 from './icon8.jpg';
 import icon9 from './icon9.jpg';
+// 引入 15 个等级的小马图片
+import p1 from './1.png';
+import p2 from './2.png';
+import p3 from './3.png';
+import p4 from './4.png';
+import p5 from './5.png';
+import p6 from './6.png';
+import p7 from './7.png';
+import p8 from './8.png';
+import p9 from './9.png';
+import p10 from './10.png';
+import p11 from './11.png';
+import p12 from './12.png';
+import p13 from './13.png';
+import p14 from './14.png';
+import p15 from './15.png';
 
+// 把它们存到一个数组里，方便根据等级切换
+const PONY_PICS = [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15];
 // 2. 这里的 icon1 到 icon9 千万不能加引号！
 const TASKS = [
   { id: 1, icon: icon1, text: '听到闹钟立刻起床不赖床', pts: 15, double: false, attackType: 'sunrise' },
@@ -996,7 +1014,7 @@ export default function App() {
               <div style={{ width: 70, height: 5, background: 'rgba(0,0,0,0.4)', borderRadius: 5, overflow: 'hidden', marginBottom: 2 }}>
                 <div style={{ width: hp + '%', height: '100%', background: 'linear-gradient(90deg,#4ade80,#22c55e)', borderRadius: 5, transition: 'width 0.4s' }} />
               </div>
-              <canvas ref={playerCanvasRef} width={80} height={110} />
+              <img    src={PONY_PICS[Math.min(lv - 1, 14)]}    alt="甜甜的小马"    style={{      width: 85,      height: 85,      objectFit: 'contain',     borderRadius: '8px',     // 这里保留了攻击和跳跃的动画效果     transform: playerAnim === 'jump' ? 'translateY(-18px)' : playerAnim === 'attack' ? 'translateX(15px)' : 'none',     transition: 'transform 0.1s ease',     // 没血时变灰，魔法满时会发金光！     filter: hp <= 0 ? 'grayscale(100%) opacity(70%)' : (mg >= mgThreshold(lv) ? 'drop-shadow(0 0 12px #fbbf24)' : 'none')   }}  />
               <div style={{ width: 50, height: 8, background: 'rgba(0,0,0,0.4)', borderRadius: '50%', marginTop: -4 }} />
               <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>甜甜 Lv.{lv}</div>
             </div>
