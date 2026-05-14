@@ -1,19 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-// ── TASKS ─────────────────────────────────────────────
 const TASKS = [
-  { id: 1, icon: '☀️', text: '听到闹钟立刻起床不赖床', pts: 15, double: false },
-  { id: 2, icon: '🪥', text: '自己刷牙洗脸换衣服', pts: 10, double: false },
-  { id: 3, icon: '🎒', text: '自己准备书包和饭盒', pts: 15, double: false },
-  { id: 4, icon: '📚', text: '完成作业/阅读打卡', pts: 20, double: false },
-  { id: 5, icon: '🌙', text: '闹钟响了立刻上床睡觉', pts: 20, double: false },
-  { id: 6, icon: '🌟', text: '做了自我突破/有进步的事', pts: 15, double: true, sub: '双倍积分！' },
-  { id: 7, icon: '🎯', text: '专注写作业，不发呆不做无关事', pts: 15, double: true, sub: '双倍积分！' },
-  { id: 8, icon: '🧹', text: '整理自己的东西', pts: 10, double: false },
-  { id: 9, icon: '📖', text: '阅读30分钟爸爸妈妈选书', pts: 15, double: false },
+  { id: 1, icon: '☀️', text: '听到闹钟立刻起床不赖床', pts: 15, double: false, attackType: 'sunrise' },
+  { id: 2, icon: '🪥', text: '自己刷牙洗脸换衣服', pts: 10, double: false, attackType: 'bubble' },
+  { id: 3, icon: '🎒', text: '自己准备书包和饭盒', pts: 15, double: false, attackType: 'star_throw' },
+  { id: 4, icon: '📚', text: '完成作业/阅读打卡', pts: 20, double: false, attackType: 'book_blast' },
+  { id: 5, icon: '🌙', text: '闹钟响了立刻上床睡觉', pts: 20, double: false, attackType: 'moon_beam' },
+  { id: 6, icon: '🌟', text: '做了自我突破/有进步的事', pts: 15, double: true, sub: '双倍积分！', attackType: 'rainbow' },
+  { id: 7, icon: '🎯', text: '专注写作业，不发呆不做无关事', pts: 15, double: true, sub: '双倍积分！', attackType: 'laser' },
+  { id: 8, icon: '🧹', text: '整理自己的东西', pts: 10, double: false, attackType: 'whirlwind' },
+  { id: 9, icon: '📖', text: '阅读30分钟爸爸妈妈选书', pts: 15, double: false, attackType: 'book_blast' },
 ];
 
-// ── LEVELS (15 levels) ────────────────────────────────
 const LEVELS = [
   { lv: 1,  name: '小马驹',     color: '#fed7aa', dark: '#f97316' },
   { lv: 2,  name: '独角小马',   color: '#fce7f3', dark: '#f472b6' },
@@ -34,23 +32,22 @@ const LEVELS = [
 
 function mgThreshold(lv) { return 600 + (lv - 1) * 100; }
 
-// ── VILLAINS (15 villains) ────────────────────────────
 const VILLAINS = [
-  { name: '赖床怪',   desc: '喜欢让你赖床的怪兽',   color: '#7f1d1d', body: '#ef4444', hp: 100 },
-  { name: '邋遢精',   desc: '让你不收拾东西的妖怪',  color: '#78350f', body: '#f97316', hp: 120 },
-  { name: '拖延魔',   desc: '总叫你拖到明天再做！',  color: '#365314', body: '#84cc16', hp: 140 },
-  { name: '零食鬼',   desc: '让你不好好吃饭的馋鬼',  color: '#7c2d12', body: '#fb923c', hp: 160 },
-  { name: '发呆精',   desc: '让你上课发呆走神！',    color: '#1e3a5f', body: '#60a5fa', hp: 180 },
-  { name: '哭闹王',   desc: '让你乱发脾气的暴君',    color: '#4a044e', body: '#c026d3', hp: 200 },
-  { name: '骗人妖',   desc: '让你说谎欺骗的妖精',    color: '#052e16', body: '#16a34a', hp: 220 },
-  { name: '夜猫怪',   desc: '让你熬夜不睡觉的恶魔',  color: '#1e1b4b', body: '#6366f1', hp: 240 },
-  { name: '乱丢怪',   desc: '让你到处乱丢东西！',    color: '#422006', body: '#d97706', hp: 260 },
-  { name: '偷懒仙',   desc: '让你什么都不想做！',    color: '#0f172a', body: '#64748b', hp: 280 },
-  { name: '骄傲龙',   desc: '让你觉得自己总是对的',  color: '#450a0a', body: '#dc2626', hp: 300 },
-  { name: '嫉妒精',   desc: '让你嫉妒别人的绿妖',    color: '#14532d', body: '#15803d', hp: 320 },
-  { name: '逃避鬼',   desc: '让你逃避困难的幽灵',    color: '#1c1917', body: '#78716c', hp: 340 },
-  { name: '懒虫王',   desc: '懒惰的终极大BOSS！',     color: '#1a1a2e', body: '#4338ca', hp: 380 },
-  { name: '混沌魔王', desc: '所有坏习惯的源头！',     color: '#0f0f0f', body: '#7c3aed', hp: 450 },
+  { name: '赖床怪',   desc: '喜欢让你赖床的怪兽',   color: '#7f1d1d', body: '#ef4444', hp: 100,  shieldColor: '#94a3b8', armorColor: '#64748b' },
+  { name: '邋遢精',   desc: '让你不收拾东西的妖怪',  color: '#78350f', body: '#f97316', hp: 120,  shieldColor: '#b45309', armorColor: '#92400e' },
+  { name: '拖延魔',   desc: '总叫你拖到明天再做！',  color: '#365314', body: '#84cc16', hp: 140,  shieldColor: '#4d7c0f', armorColor: '#365314' },
+  { name: '零食鬼',   desc: '让你不好好吃饭的馋鬼',  color: '#7c2d12', body: '#fb923c', hp: 160,  shieldColor: '#c2410c', armorColor: '#9a3412' },
+  { name: '发呆精',   desc: '让你上课发呆走神！',    color: '#1e3a5f', body: '#60a5fa', hp: 180,  shieldColor: '#1d4ed8', armorColor: '#1e40af' },
+  { name: '哭闹王',   desc: '让你乱发脾气的暴君',    color: '#4a044e', body: '#c026d3', hp: 200,  shieldColor: '#7e22ce', armorColor: '#6b21a8' },
+  { name: '骗人妖',   desc: '让你说谎欺骗的妖精',    color: '#052e16', body: '#16a34a', hp: 220,  shieldColor: '#15803d', armorColor: '#166534' },
+  { name: '夜猫怪',   desc: '让你熬夜不睡觉的恶魔',  color: '#1e1b4b', body: '#6366f1', hp: 240,  shieldColor: '#4338ca', armorColor: '#3730a3' },
+  { name: '乱丢怪',   desc: '让你到处乱丢东西！',    color: '#422006', body: '#d97706', hp: 260,  shieldColor: '#b45309', armorColor: '#92400e' },
+  { name: '偷懒仙',   desc: '让你什么都不想做！',    color: '#0f172a', body: '#64748b', hp: 280,  shieldColor: '#475569', armorColor: '#334155' },
+  { name: '骄傲龙',   desc: '让你觉得自己总是对的',  color: '#450a0a', body: '#dc2626', hp: 300,  shieldColor: '#b91c1c', armorColor: '#991b1b' },
+  { name: '嫉妒精',   desc: '让你嫉妒别人的绿妖',    color: '#14532d', body: '#15803d', hp: 320,  shieldColor: '#166534', armorColor: '#14532d' },
+  { name: '逃避鬼',   desc: '让你逃避困难的幽灵',    color: '#1c1917', body: '#78716c', hp: 340,  shieldColor: '#57534e', armorColor: '#44403c' },
+  { name: '懒虫王',   desc: '懒惰的终极大BOSS！',     color: '#1a1a2e', body: '#4338ca', hp: 380,  shieldColor: '#3730a3', armorColor: '#312e81' },
+  { name: '混沌魔王', desc: '所有坏习惯的源头！',     color: '#0f0f0f', body: '#7c3aed', hp: 450,  shieldColor: '#6d28d9', armorColor: '#5b21b6' },
 ];
 
 // ── AUDIO ─────────────────────────────────────────────
@@ -75,15 +72,13 @@ function sfxLevelUp()     { [523,659,784,1047,1319].forEach((f,i) => tone(f,0.18
 function sfxVillainDead() { [400,350,300,250,200,150].forEach((f,i) => tone(f,0.12,'sawtooth',0.25,i*0.07)); }
 function sfxWin()         { const m=[523,587,659,698,784,880,988,1047]; m.forEach((f,i) => tone(f,0.2,'sine',0.4,i*0.15)); }
 
-// ── HELPERS ───────────────────────────────────────────
 function sn(k, d) { const v = localStorage.getItem(k); return v !== null && !isNaN(Number(v)) ? Number(v) : d; }
 function todayStr() { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
 
-// ── CANVAS DRAWING ────────────────────────────────────
 function drawStars(canvas) {
   if (!canvas) return;
   canvas.width = canvas.offsetWidth || 420;
-  canvas.height = canvas.offsetHeight || 168;
+  canvas.height = canvas.offsetHeight || 200;
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   for (let i = 0; i < 60; i++) {
@@ -112,7 +107,6 @@ function drawPlayer(canvas, lv, hp, mg, anim) {
   const ox = anim === 'attack' ? 12 : 0;
   const y = offsetY;
 
-  // tail
   ctx.shadowBlur = 0;
   ctx.beginPath(); ctx.moveTo(15 + ox, 75 + y); ctx.quadraticCurveTo(2, 65 + y, 8, 50 + y);
   ctx.strokeStyle = darkColor; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.stroke();
@@ -120,15 +114,12 @@ function drawPlayer(canvas, lv, hp, mg, anim) {
   if (mgFull) { ctx.shadowColor = '#fbbf24'; ctx.shadowBlur = 20; }
   else if (mgPct > 0.6) { ctx.shadowColor = lvInfo.dark; ctx.shadowBlur = 10 * mgPct; }
 
-  // body
   ctx.beginPath(); ctx.ellipse(40 + ox, 75 + y, 22, 17, 0, 0, Math.PI * 2);
   ctx.fillStyle = bodyColor; ctx.fill(); ctx.strokeStyle = darkColor; ctx.lineWidth = 1.5; ctx.stroke();
 
-  // neck+head
   ctx.beginPath(); ctx.ellipse(52 + ox, 58 + y, 13, 15, Math.PI / 8, 0, Math.PI * 2);
   ctx.fillStyle = bodyColor; ctx.fill(); ctx.strokeStyle = darkColor; ctx.lineWidth = 1.5; ctx.stroke();
 
-  // legs
   [[26,90],[34,90],[46,90],[54,90]].forEach(([lx, ly]) => {
     ctx.beginPath(); ctx.moveTo(lx + ox, ly - 12 + y); ctx.lineTo(lx + ox, ly + y);
     ctx.strokeStyle = darkColor; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.stroke();
@@ -137,18 +128,14 @@ function drawPlayer(canvas, lv, hp, mg, anim) {
   });
 
   ctx.shadowBlur = 0;
-  // eye
   ctx.beginPath(); ctx.arc(56 + ox, 52 + y, 3.5, 0, Math.PI * 2); ctx.fillStyle = '#1f2937'; ctx.fill();
   ctx.beginPath(); ctx.arc(57.5 + ox, 51 + y, 1.2, 0, Math.PI * 2); ctx.fillStyle = 'white'; ctx.fill();
-  // cheek
   ctx.beginPath(); ctx.ellipse(52 + ox, 57 + y, 3, 2, 0, 0, Math.PI * 2);
   ctx.fillStyle = `rgba(253,164,175,${hp >= 50 ? 0.9 : 0.4})`; ctx.fill();
-  // mane
   ctx.beginPath(); ctx.moveTo(44 + ox, 44 + y); ctx.bezierCurveTo(38 + ox, 35 + y, 50 + ox, 30 + y, 52 + ox, 40 + y);
   ctx.bezierCurveTo(54 + ox, 30 + y, 62 + ox, 32 + y, 60 + ox, 44 + y);
   ctx.fillStyle = darkColor; ctx.fill();
 
-  // horn (lv>=2)
   if (lv >= 2) {
     ctx.beginPath(); ctx.moveTo(58 + ox, 44 + y); ctx.lineTo(62 + ox, 28 + y); ctx.lineTo(54 + ox, 40 + y);
     ctx.fillStyle = '#fbbf24'; ctx.fill();
@@ -161,7 +148,6 @@ function drawPlayer(canvas, lv, hp, mg, anim) {
     }
   }
 
-  // wings (lv>=5)
   if (lv >= 5) {
     ctx.save(); ctx.globalAlpha = 0.7;
     ctx.beginPath(); ctx.moveTo(22 + ox, 68 + y); ctx.bezierCurveTo(5, 50 + y, 8, 40 + y, 18 + ox, 55 + y);
@@ -170,7 +156,6 @@ function drawPlayer(canvas, lv, hp, mg, anim) {
     ctx.restore();
   }
 
-  // magic particles (lv>=3)
   if (lv >= 3 && mgPct > 0.3) {
     const count = Math.floor(mgPct * 6);
     for (let i = 0; i < count; i++) {
@@ -181,7 +166,6 @@ function drawPlayer(canvas, lv, hp, mg, anim) {
     }
   }
 
-  // cosmic aura (lv>=10)
   if (lv >= 10) {
     ctx.save(); ctx.globalAlpha = 0.25;
     ctx.beginPath(); ctx.ellipse(40 + ox, 68 + y, 30, 22, 0, 0, Math.PI * 2);
@@ -191,18 +175,21 @@ function drawPlayer(canvas, lv, hp, mg, anim) {
   }
 }
 
-function drawVillain(canvas, villainIdx, villainHp, flash) {
+// ── VILLAIN DRAW with armor/shield ──────────────────────
+function drawVillain(canvas, villainIdx, villainHp, flash, armorPieces) {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, 80, 110);
+  ctx.clearRect(0, 0, 100, 140);
   const v = VILLAINS[Math.min(villainIdx, VILLAINS.length - 1)];
   const hpPct = Math.max(0, villainHp / v.hp);
 
-  if (flash) { ctx.fillStyle = 'rgba(255,50,50,0.5)'; ctx.fillRect(0, 0, 80, 110); }
+  if (flash) {
+    ctx.fillStyle = 'rgba(255,50,50,0.6)';
+    ctx.fillRect(0, 0, 100, 140);
+  }
 
-  // ground shadow
   ctx.save(); ctx.globalAlpha = 0.3;
-  ctx.beginPath(); ctx.ellipse(40, 105, 22, 6, 0, 0, Math.PI * 2);
+  ctx.beginPath(); ctx.ellipse(50, 128, 26, 7, 0, 0, Math.PI * 2);
   ctx.fillStyle = '#000'; ctx.fill(); ctx.restore();
 
   const angry = hpPct < 0.3;
@@ -210,50 +197,440 @@ function drawVillain(canvas, villainIdx, villainHp, flash) {
   else { ctx.shadowColor = v.body; ctx.shadowBlur = 8; }
 
   const vi = villainIdx % 5;
-  const eyeY = vi === 2 ? 65 : vi === 3 ? 58 : 60;
+  const eyeY = vi === 2 ? 82 : vi === 3 ? 74 : 76;
 
+  // Draw villain body
   if (vi === 0) {
-    ctx.beginPath(); ctx.ellipse(40, 65, 22, 25, 0, 0, Math.PI * 2);
+    ctx.beginPath(); ctx.ellipse(50, 82, 27, 30, 0, 0, Math.PI * 2);
     ctx.fillStyle = v.body; ctx.fill();
   } else if (vi === 1) {
     ctx.beginPath();
     for (let i = 0; i < 8; i++) {
-      const a = i / 8 * Math.PI * 2, r = i % 2 === 0 ? 28 : 18;
-      if (i === 0) ctx.moveTo(40 + Math.cos(a) * r, 60 + Math.sin(a) * r);
-      else ctx.lineTo(40 + Math.cos(a) * r, 60 + Math.sin(a) * r);
+      const a = i / 8 * Math.PI * 2, r = i % 2 === 0 ? 34 : 22;
+      if (i === 0) ctx.moveTo(50 + Math.cos(a) * r, 76 + Math.sin(a) * r);
+      else ctx.lineTo(50 + Math.cos(a) * r, 76 + Math.sin(a) * r);
     }
     ctx.closePath(); ctx.fillStyle = v.body; ctx.fill();
   } else if (vi === 2) {
-    ctx.beginPath(); ctx.moveTo(40, 30); ctx.lineTo(65, 90); ctx.lineTo(15, 90); ctx.closePath();
+    ctx.beginPath(); ctx.moveTo(50, 42); ctx.lineTo(80, 112); ctx.lineTo(20, 112); ctx.closePath();
     ctx.fillStyle = v.body; ctx.fill();
   } else if (vi === 3) {
-    ctx.beginPath(); ctx.roundRect(18, 38, 44, 52, 8);
+    ctx.beginPath(); ctx.roundRect(22, 50, 56, 64, 8);
     ctx.fillStyle = v.body; ctx.fill();
   } else {
     ctx.beginPath();
     for (let i = 0; i < 10; i++) {
-      const a = i / 10 * Math.PI * 2 - Math.PI / 2, r = i % 2 === 0 ? 26 : 14;
-      if (i === 0) ctx.moveTo(40 + Math.cos(a) * r, 60 + Math.sin(a) * r);
-      else ctx.lineTo(40 + Math.cos(a) * r, 60 + Math.sin(a) * r);
+      const a = i / 10 * Math.PI * 2 - Math.PI / 2, r = i % 2 === 0 ? 32 : 18;
+      if (i === 0) ctx.moveTo(50 + Math.cos(a) * r, 76 + Math.sin(a) * r);
+      else ctx.lineTo(50 + Math.cos(a) * r, 76 + Math.sin(a) * r);
     }
     ctx.closePath(); ctx.fillStyle = v.body; ctx.fill();
   }
 
   ctx.shadowBlur = 0;
-  ctx.beginPath(); ctx.arc(33, eyeY, 5, 0, Math.PI * 2); ctx.fillStyle = '#111'; ctx.fill();
-  ctx.beginPath(); ctx.arc(47, eyeY, 5, 0, Math.PI * 2); ctx.fillStyle = '#111'; ctx.fill();
+
+  // Eyes
+  ctx.beginPath(); ctx.arc(42, eyeY, 6, 0, Math.PI * 2); ctx.fillStyle = '#111'; ctx.fill();
+  ctx.beginPath(); ctx.arc(58, eyeY, 6, 0, Math.PI * 2); ctx.fillStyle = '#111'; ctx.fill();
   if (angry || hpPct < 0.5) {
-    ctx.beginPath(); ctx.moveTo(29, eyeY - 7); ctx.lineTo(37, eyeY - 4);
+    ctx.beginPath(); ctx.moveTo(37, eyeY - 9); ctx.lineTo(47, eyeY - 5);
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5; ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(51, eyeY - 7); ctx.lineTo(43, eyeY - 4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(63, eyeY - 9); ctx.lineTo(53, eyeY - 5); ctx.stroke();
   }
-  ctx.beginPath(); ctx.arc(35, eyeY - 1, 1.5, 0, Math.PI * 2); ctx.fillStyle = 'white'; ctx.fill();
-  ctx.beginPath(); ctx.arc(49, eyeY - 1, 1.5, 0, Math.PI * 2); ctx.fillStyle = 'white'; ctx.fill();
+  ctx.beginPath(); ctx.arc(44, eyeY - 1, 2, 0, Math.PI * 2); ctx.fillStyle = 'white'; ctx.fill();
+  ctx.beginPath(); ctx.arc(60, eyeY - 1, 2, 0, Math.PI * 2); ctx.fillStyle = 'white'; ctx.fill();
   ctx.beginPath();
-  if (hpPct < 0.3) { ctx.arc(40, eyeY + 8, 6, 0, Math.PI); ctx.fillStyle = '#ef4444'; ctx.fill(); }
-  else { ctx.moveTo(35, eyeY + 8); ctx.lineTo(45, eyeY + 8); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke(); }
-  ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.font = 'bold 8px system-ui';
-  ctx.textAlign = 'center'; ctx.fillText(v.name, 40, 15);
+  if (hpPct < 0.3) { ctx.arc(50, eyeY + 10, 7, 0, Math.PI); ctx.fillStyle = '#ef4444'; ctx.fill(); }
+  else { ctx.moveTo(44, eyeY + 10); ctx.lineTo(56, eyeY + 10); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke(); }
+  ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.font = 'bold 9px system-ui';
+  ctx.textAlign = 'center'; ctx.fillText(v.name, 50, 20);
+
+  // ── ARMOR SYSTEM ─────────────────────────────────────
+  const shield = armorPieces.shield;    // 0..3
+  const shoulderL = armorPieces.shoulderL; // 0..2
+  const shoulderR = armorPieces.shoulderR;
+  const chestPlate = armorPieces.chest; // 0..2
+  const helm = armorPieces.helm;        // 0..2
+
+  // Shield (left side)
+  if (shield > 0) {
+    ctx.save();
+    ctx.globalAlpha = shield === 3 ? 0.95 : shield === 2 ? 0.65 : 0.35;
+    ctx.beginPath();
+    ctx.moveTo(10, 60); ctx.lineTo(2, 70); ctx.lineTo(2, 100); ctx.lineTo(10, 114); ctx.lineTo(26, 100); ctx.lineTo(26, 70); ctx.closePath();
+    ctx.fillStyle = v.shieldColor;
+    ctx.fill();
+    // Shield emblem
+    if (shield === 3) {
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.font = 'bold 14px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText('✦', 14, 90);
+    }
+    // Cracks on shield
+    if (shield <= 2) {
+      ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(8, 72); ctx.lineTo(20, 88); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(14, 70); ctx.lineTo(6, 90); ctx.stroke();
+    }
+    if (shield === 1) {
+      ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(5, 95); ctx.lineTo(22, 78); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(10, 108); ctx.lineTo(24, 85); ctx.stroke();
+    }
+    // Shield border
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(10, 60); ctx.lineTo(2, 70); ctx.lineTo(2, 100); ctx.lineTo(10, 114); ctx.lineTo(26, 100); ctx.lineTo(26, 70); ctx.closePath();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Helmet
+  if (helm > 0) {
+    ctx.save();
+    ctx.globalAlpha = helm === 2 ? 0.9 : 0.5;
+    // Helm base
+    ctx.beginPath();
+    ctx.arc(50, eyeY - 30, 22, Math.PI, 0, false);
+    ctx.lineTo(70, eyeY - 16); ctx.lineTo(30, eyeY - 16); ctx.closePath();
+    ctx.fillStyle = v.armorColor; ctx.fill();
+    // Helm visor slit
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(36, eyeY - 24, 28, 5);
+    // Cracks
+    if (helm === 1) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(40, eyeY - 36); ctx.lineTo(52, eyeY - 20); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(55, eyeY - 38); ctx.lineTo(48, eyeY - 18); ctx.stroke();
+    }
+    // Helmet shine
+    ctx.save(); ctx.globalAlpha = 0.3;
+    ctx.beginPath(); ctx.arc(42, eyeY - 36, 8, 0.8, 2.2, false);
+    ctx.strokeStyle = 'white'; ctx.lineWidth = 3; ctx.stroke(); ctx.restore();
+    ctx.restore();
+  }
+
+  // Shoulder pads
+  if (shoulderL > 0) {
+    ctx.save();
+    ctx.globalAlpha = shoulderL === 2 ? 0.85 : 0.45;
+    ctx.beginPath(); ctx.ellipse(20, 68, 12, 9, -0.4, 0, Math.PI * 2);
+    ctx.fillStyle = v.armorColor; ctx.fill();
+    if (shoulderL === 1) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(14, 64); ctx.lineTo(26, 74); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  if (shoulderR > 0) {
+    ctx.save();
+    ctx.globalAlpha = shoulderR === 2 ? 0.85 : 0.45;
+    ctx.beginPath(); ctx.ellipse(80, 68, 12, 9, 0.4, 0, Math.PI * 2);
+    ctx.fillStyle = v.armorColor; ctx.fill();
+    if (shoulderR === 1) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(74, 64); ctx.lineTo(86, 74); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // Chest plate
+  if (chestPlate > 0) {
+    ctx.save();
+    ctx.globalAlpha = chestPlate === 2 ? 0.8 : 0.4;
+    ctx.beginPath();
+    ctx.roundRect(32, 66, 36, 34, 4);
+    ctx.fillStyle = v.armorColor; ctx.fill();
+    // Plate details
+    if (chestPlate === 2) {
+      ctx.fillStyle = 'rgba(255,255,255,0.25)';
+      ctx.fillRect(36, 70, 12, 4);
+      ctx.fillRect(52, 70, 12, 4);
+    }
+    // Cracks
+    if (chestPlate === 1) {
+      ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(38, 68); ctx.lineTo(50, 90); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(55, 70); ctx.lineTo(44, 98); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(35, 80); ctx.lineTo(65, 72); ctx.stroke();
+    }
+    // Plate border
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(32, 66, 36, 34, 4); ctx.stroke();
+    ctx.restore();
+  }
+}
+
+// ── COMPUTE ARMOR STATE from HP pct ──────────────────
+function getArmorPieces(hpPct) {
+  // hpPct 1.0 → all armor; 0 → no armor
+  // shield: 3 (full) → 2 (cracked) → 1 (shattered) → 0 (gone)
+  const shield = hpPct > 0.75 ? 3 : hpPct > 0.55 ? 2 : hpPct > 0.3 ? 1 : 0;
+  const helm = hpPct > 0.6 ? 2 : hpPct > 0.25 ? 1 : 0;
+  const shoulderL = hpPct > 0.5 ? 2 : hpPct > 0.2 ? 1 : 0;
+  const shoulderR = hpPct > 0.45 ? 2 : hpPct > 0.15 ? 1 : 0;
+  const chest = hpPct > 0.4 ? 2 : hpPct > 0.1 ? 1 : 0;
+  return { shield, helm, shoulderL, shoulderR, chest };
+}
+
+// ── ATTACK EFFECTS ────────────────────────────────────
+function drawAttackEffect(canvas, attackType, progress, lvInfo) {
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const w = canvas.width, h = canvas.height;
+  const t = progress; // 0..1
+
+  switch (attackType) {
+    case 'sunrise': {
+      // Golden rays from left expanding rightward
+      const cx = w * 0.15, cy = h * 0.5;
+      const maxR = w * t * 1.2;
+      ctx.save(); ctx.globalAlpha = Math.sin(t * Math.PI) * 0.7;
+      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxR);
+      grad.addColorStop(0, '#fbbf24'); grad.addColorStop(0.4, '#f97316'); grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(cx, cy, maxR, 0, Math.PI * 2); ctx.fill();
+      // Rays
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2;
+        ctx.globalAlpha = Math.sin(t * Math.PI) * 0.5;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(angle) * 20, cy + Math.sin(angle) * 20);
+        ctx.lineTo(cx + Math.cos(angle) * maxR, cy + Math.sin(angle) * maxR);
+        ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 3; ctx.stroke();
+      }
+      ctx.restore();
+      break;
+    }
+    case 'bubble': {
+      // Colorful bubbles flying from left to right
+      const bubbles = [
+        { x: 0.1, y: 0.3, size: 18, color: '#60a5fa', delay: 0 },
+        { x: 0.15, y: 0.6, size: 14, color: '#f472b6', delay: 0.1 },
+        { x: 0.05, y: 0.5, size: 22, color: '#a78bfa', delay: 0.05 },
+        { x: 0.2, y: 0.4, size: 12, color: '#34d399', delay: 0.15 },
+        { x: 0.08, y: 0.7, size: 16, color: '#fbbf24', delay: 0.08 },
+      ];
+      bubbles.forEach(b => {
+        const bt = Math.max(0, t - b.delay);
+        const bx = w * (b.x + bt * 0.85);
+        const by = h * b.y + Math.sin(bt * 8) * 12;
+        ctx.save(); ctx.globalAlpha = Math.min(1, bt * 3) * (1 - Math.max(0, (bt - 0.7) * 3));
+        ctx.beginPath(); ctx.arc(bx, by, b.size, 0, Math.PI * 2);
+        ctx.strokeStyle = b.color; ctx.lineWidth = 2.5; ctx.stroke();
+        ctx.fillStyle = b.color + '33'; ctx.fill();
+        // shine
+        ctx.beginPath(); ctx.arc(bx - b.size * 0.3, by - b.size * 0.3, b.size * 0.25, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fill();
+        ctx.restore();
+      });
+      break;
+    }
+    case 'star_throw': {
+      // Stars shooting from left to right
+      const stars = [
+        { x0: 0.05, y0: 0.4, vy: -0.05, delay: 0, color: '#fbbf24' },
+        { x0: 0.08, y0: 0.6, vy: 0.03, delay: 0.08, color: '#f472b6' },
+        { x0: 0.03, y0: 0.5, vy: 0.0, delay: 0.04, color: '#60a5fa' },
+      ];
+      stars.forEach(s => {
+        const st = Math.max(0, t - s.delay);
+        if (st <= 0) return;
+        const sx = w * s.x0 + w * st * 0.9;
+        const sy = h * s.y0 + h * s.vy * st * 5;
+        ctx.save(); ctx.globalAlpha = Math.min(1, st * 4) * (1 - Math.max(0, (st - 0.75) * 4));
+        ctx.translate(sx, sy); ctx.rotate(st * 10);
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+          const a = (i * 4 / 5 - 0.5) * Math.PI;
+          const r = i % 2 === 0 ? 14 : 6;
+          if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+          else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+        }
+        ctx.closePath(); ctx.fillStyle = s.color; ctx.fill();
+        // trail
+        ctx.globalAlpha *= 0.4;
+        for (let tr = 1; tr <= 3; tr++) {
+          const tx = sx - (w * 0.9 * st / 3) * tr * 0.1;
+          ctx.beginPath();
+          ctx.arc(tx - sx, 0, 4 - tr, 0, Math.PI * 2);
+          ctx.fillStyle = s.color; ctx.fill();
+        }
+        ctx.restore();
+      });
+      break;
+    }
+    case 'book_blast': {
+      // Pages/book pages flying and exploding
+      ctx.save();
+      const bx = w * (0.05 + t * 0.7), by = h * 0.5;
+      ctx.globalAlpha = Math.sin(t * Math.PI) * 0.85;
+      // Book
+      ctx.fillStyle = '#3b82f6';
+      ctx.fillRect(bx - 16, by - 20, 32, 28);
+      ctx.fillStyle = 'white';
+      ctx.fillRect(bx - 12, by - 16, 10, 20);
+      ctx.fillRect(bx + 2, by - 16, 10, 20);
+      // Flying pages
+      for (let p = 0; p < 5; p++) {
+        const pt = t - p * 0.08;
+        if (pt < 0) continue;
+        const px = bx + Math.cos(p * 1.3 + t * 4) * pt * 60;
+        const py = by + Math.sin(p * 1.7 + t * 3) * pt * 40;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, 1 - pt * 1.5) * Math.sin(t * Math.PI);
+        ctx.translate(px, py); ctx.rotate(pt * 5 + p);
+        ctx.fillStyle = 'white'; ctx.strokeStyle = '#93c5fd'; ctx.lineWidth = 1;
+        ctx.fillRect(-8, -10, 16, 20); ctx.strokeRect(-8, -10, 16, 20);
+        // Lines on page
+        ctx.strokeStyle = '#bfdbfe'; ctx.lineWidth = 0.8;
+        for (let l = 0; l < 4; l++) { ctx.beginPath(); ctx.moveTo(-6, -6 + l * 4); ctx.lineTo(6, -6 + l * 4); ctx.stroke(); }
+        ctx.restore();
+      }
+      ctx.restore();
+      break;
+    }
+    case 'moon_beam': {
+      // Purple/blue crescent beam
+      ctx.save();
+      const progress2 = t;
+      ctx.globalAlpha = Math.sin(t * Math.PI) * 0.85;
+      // Beam
+      const grad = ctx.createLinearGradient(0, h * 0.45, w * progress2, h * 0.55);
+      grad.addColorStop(0, '#a78bfa');
+      grad.addColorStop(0.5, '#7c3aed');
+      grad.addColorStop(1, '#312e81');
+      ctx.beginPath();
+      ctx.moveTo(0, h * 0.45);
+      ctx.quadraticCurveTo(w * progress2 * 0.5, h * 0.3, w * progress2, h * 0.5);
+      ctx.quadraticCurveTo(w * progress2 * 0.5, h * 0.7, 0, h * 0.55);
+      ctx.closePath();
+      ctx.fillStyle = grad; ctx.fill();
+      // Stars along beam
+      for (let s = 0; s < 6; s++) {
+        const st = s / 6 * progress2;
+        const sx = w * st, sy = h * 0.5 + Math.sin(s * 2) * 15;
+        ctx.beginPath(); ctx.arc(sx, sy, 3, 0, Math.PI * 2);
+        ctx.fillStyle = '#fbbf24'; ctx.fill();
+      }
+      // Crescent at tip
+      if (progress2 > 0.5) {
+        const tip = { x: w * progress2, y: h * 0.5 };
+        ctx.beginPath(); ctx.arc(tip.x, tip.y, 18, 0, Math.PI * 2);
+        ctx.fillStyle = '#c4b5fd'; ctx.fill();
+        ctx.beginPath(); ctx.arc(tip.x + 7, tip.y - 4, 14, 0, Math.PI * 2);
+        ctx.fillStyle = '#1e1b4b'; ctx.fill();
+      }
+      ctx.restore();
+      break;
+    }
+    case 'rainbow': {
+      // Rainbow arc sweeping across
+      ctx.save();
+      const colors = ['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#8b5cf6','#ec4899'];
+      const maxAngle = t * Math.PI;
+      colors.forEach((col, i) => {
+        ctx.beginPath();
+        ctx.arc(w * 0.1, h * 0.9, 60 + i * 14, Math.PI, Math.PI + maxAngle, false);
+        ctx.strokeStyle = col; ctx.lineWidth = 8; ctx.globalAlpha = 0.8; ctx.stroke();
+      });
+      // Sparkles at arc tip
+      if (t > 0.3) {
+        const tipAngle = Math.PI + maxAngle;
+        const tipR = 60 + 3.5 * 14;
+        const tipX = w * 0.1 + Math.cos(tipAngle) * tipR;
+        const tipY = h * 0.9 + Math.sin(tipAngle) * tipR;
+        for (let sp = 0; sp < 5; sp++) {
+          ctx.beginPath();
+          ctx.arc(tipX + Math.cos(sp * 1.3) * 8, tipY + Math.sin(sp * 1.3) * 8, 3, 0, Math.PI * 2);
+          ctx.fillStyle = colors[sp % 7]; ctx.globalAlpha = 0.9; ctx.fill();
+        }
+      }
+      ctx.restore();
+      break;
+    }
+    case 'laser': {
+      // Red targeting laser then beam
+      ctx.save();
+      if (t < 0.4) {
+        // Targeting phase: crosshair moving to villain
+        const cx = w * (0.3 + t * 1.5), cy = h * 0.5;
+        ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 1; ctx.globalAlpha = 0.7;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(cx - 12, cy); ctx.lineTo(cx + 12, cy); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx, cy - 12); ctx.lineTo(cx, cy + 12); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.beginPath(); ctx.arc(cx, cy, 8, 0, Math.PI * 2); ctx.stroke();
+      } else {
+        // Beam phase
+        const bt = (t - 0.4) / 0.6;
+        ctx.globalAlpha = 1 - bt * 0.7;
+        ctx.beginPath();
+        ctx.moveTo(w * 0.15, h * 0.5);
+        ctx.lineTo(w * 0.85, h * 0.5);
+        ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 4 + bt * 2; ctx.stroke();
+        ctx.strokeStyle = '#fca5a5'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.strokeStyle = 'white'; ctx.lineWidth = 1; ctx.stroke();
+        // Impact circle
+        ctx.beginPath(); ctx.arc(w * 0.85, h * 0.5, bt * 25, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(239,68,68,${(1 - bt) * 0.6})`; ctx.fill();
+      }
+      ctx.restore();
+      break;
+    }
+    case 'whirlwind': {
+      // Spinning vortex moving right
+      ctx.save();
+      const wx = w * (0.1 + t * 0.8), wy = h * 0.5;
+      ctx.globalAlpha = Math.sin(t * Math.PI) * 0.8;
+      for (let ring = 0; ring < 3; ring++) {
+        const r = 15 + ring * 10;
+        ctx.beginPath();
+        ctx.arc(wx, wy, r, -t * 8, -t * 8 + Math.PI * 1.5);
+        ctx.strokeStyle = ring === 0 ? '#60a5fa' : ring === 1 ? '#a78bfa' : '#34d399';
+        ctx.lineWidth = 4 - ring; ctx.stroke();
+      }
+      // Debris particles
+      for (let d = 0; d < 6; d++) {
+        const da = d / 6 * Math.PI * 2 + t * 10;
+        const dr = 20 + Math.sin(t * 5 + d) * 10;
+        ctx.fillStyle = '#94a3b8'; ctx.globalAlpha = Math.sin(t * Math.PI) * 0.6;
+        ctx.fillRect(wx + Math.cos(da) * dr - 2, wy + Math.sin(da) * dr - 2, 4, 4);
+      }
+      ctx.restore();
+      break;
+    }
+    default: {
+      // Generic flash
+      ctx.save();
+      ctx.globalAlpha = Math.sin(t * Math.PI) * 0.5;
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(0, 0, w, h);
+      ctx.restore();
+    }
+  }
+
+  // ── ARMOR BREAK PARTICLES at end ──────────────────
+  if (t > 0.65) {
+    const bt = (t - 0.65) / 0.35;
+    const count = 10;
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * Math.PI * 2;
+      const dist = bt * 40;
+      const px = w * 0.82 + Math.cos(angle) * dist;
+      const py = h * 0.5 + Math.sin(angle) * dist;
+      ctx.save();
+      ctx.globalAlpha = (1 - bt) * 0.9;
+      ctx.fillStyle = i % 2 === 0 ? '#94a3b8' : '#64748b';
+      ctx.translate(px, py); ctx.rotate(angle + bt * 5);
+      ctx.fillRect(-4, -2, 8, 4);
+      ctx.restore();
+    }
+  }
 }
 
 // ── MAIN COMPONENT ────────────────────────────────────
@@ -276,14 +653,18 @@ export default function App() {
   const [playerAnim, setPlayerAnim] = useState('idle');
   const [villainFlash, setVillainFlash] = useState(false);
   const [showBeam, setShowBeam]     = useState(false);
+  const [currentAttackType, setCurrentAttackType] = useState(null);
+  const [attackProgress, setAttackProgress] = useState(0);
+  const [showAttackCanvas, setShowAttackCanvas] = useState(false);
 
   const playerCanvasRef  = useRef(null);
   const villainCanvasRef = useRef(null);
   const starsCanvasRef   = useRef(null);
   const beamCanvasRef    = useRef(null);
+  const attackCanvasRef  = useRef(null);
   const msgTimer         = useRef(null);
+  const attackAnimRef    = useRef(null);
 
-  // ── SAVE ────────────────────────────────────────────
   useEffect(() => {
     localStorage.setItem('p_pts', pts);
     localStorage.setItem('p_hp', hp);
@@ -296,7 +677,6 @@ export default function App() {
     localStorage.setItem('p_date', lastDate);
   }, [pts, hp, mg, lv, day, villainIdx, villainHp, done, lastDate]);
 
-  // ── AUTO RESET ──────────────────────────────────────
   useEffect(() => {
     const today = todayStr();
     if (lastDate && lastDate !== today && hp > 0) {
@@ -307,26 +687,22 @@ export default function App() {
       toast(hp <= 40 ? '😭 小马饿晕了...' : '新的一天！加油！');
     }
     if (!lastDate) setLastDate(today);
-    // migrate old task format
-    try {
-      const old = localStorage.getItem('p_tk');
-      if (old) { localStorage.removeItem('p_tk'); }
-    } catch (e) {}
+    try { const old = localStorage.getItem('p_tk'); if (old) localStorage.removeItem('p_tk'); } catch (e) {}
   }, []);
 
-  // ── STARS ───────────────────────────────────────────
   useEffect(() => { drawStars(starsCanvasRef.current); }, []);
 
-  // ── DRAW LOOP ───────────────────────────────────────
   useEffect(() => {
     drawPlayer(playerCanvasRef.current, lv, hp, mg, playerAnim);
   }, [lv, hp, mg, playerAnim]);
 
   useEffect(() => {
-    drawVillain(villainCanvasRef.current, villainIdx, villainHp, villainFlash);
+    const v = VILLAINS[Math.min(villainIdx, VILLAINS.length - 1)];
+    const hpPct = Math.max(0, villainHp / v.hp);
+    const armor = getArmorPieces(hpPct);
+    drawVillain(villainCanvasRef.current, villainIdx, villainHp, villainFlash, armor);
   }, [villainIdx, villainHp, villainFlash]);
 
-  // animate magic particles
   useEffect(() => {
     if (lv < 3) return;
     const id = setInterval(() => {
@@ -335,17 +711,47 @@ export default function App() {
     return () => clearInterval(id);
   }, [lv, hp, mg]);
 
-  // ── TOAST ───────────────────────────────────────────
+  // Attack effect animation loop
+  useEffect(() => {
+    if (!currentAttackType || !showAttackCanvas) return;
+    const canvas = attackCanvasRef.current;
+    if (!canvas) return;
+    canvas.width = canvas.offsetWidth || 420;
+    canvas.height = canvas.offsetHeight || 200;
+    const lvInfo = LEVELS[Math.min(lv - 1, LEVELS.length - 1)];
+    let start = null;
+    const duration = 700;
+    function frame(ts) {
+      if (!start) start = ts;
+      const elapsed = ts - start;
+      const prog = Math.min(1, elapsed / duration);
+      drawAttackEffect(canvas, currentAttackType, prog, lvInfo);
+      if (prog < 1) attackAnimRef.current = requestAnimationFrame(frame);
+      else {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        setShowAttackCanvas(false);
+        setCurrentAttackType(null);
+      }
+    }
+    attackAnimRef.current = requestAnimationFrame(frame);
+    return () => { if (attackAnimRef.current) cancelAnimationFrame(attackAnimRef.current); };
+  }, [currentAttackType, showAttackCanvas]);
+
   function toast(msg) {
     setMessage(msg);
     if (msgTimer.current) clearTimeout(msgTimer.current);
     msgTimer.current = setTimeout(() => setMessage(''), 3000);
   }
 
-  // ── ATTACK ANIM ─────────────────────────────────────
-  function attackAnim(onHit) {
+  function attackAnim(onHit, attackType) {
     const phases = ['idle', 'jump', 'attack', 'attack', 'jump', 'idle'];
     let i = 0;
+    // Start attack effect
+    if (attackType) {
+      setCurrentAttackType(attackType);
+      setShowAttackCanvas(true);
+    }
     function step() {
       setPlayerAnim(phases[Math.min(i, phases.length - 1)]);
       if (i === 2) { setVillainFlash(true); onHit(); }
@@ -357,12 +763,11 @@ export default function App() {
     step();
   }
 
-  // ── MAGIC BEAM ──────────────────────────────────────
   function magicBeamAnim(onDone) {
     const bc = beamCanvasRef.current;
     if (!bc) { onDone(); return; }
     bc.width = bc.offsetWidth || 420;
-    bc.height = bc.offsetHeight || 168;
+    bc.height = bc.offsetHeight || 200;
     setShowBeam(true);
     const ctx = bc.getContext('2d');
     const lvInfo = LEVELS[Math.min(lv - 1, LEVELS.length - 1)];
@@ -397,7 +802,6 @@ export default function App() {
     step();
   }
 
-  // ── DAMAGE VILLAIN ──────────────────────────────────
   function applyDamage(dmg, currentVillainIdx, currentVillainHp) {
     const newHp = Math.max(0, currentVillainHp - dmg);
     setVillainHp(newHp);
@@ -417,14 +821,13 @@ export default function App() {
     }
   }
 
-  // ── ACTIONS ─────────────────────────────────────────
   function feedPet() {
     if (hp <= 0) return;
     if (pts < 10) { toast('星星不够！需要10⭐'); return; }
     if (hp >= 100) { toast('小马已经很饱了！'); return; }
     setPts(p => p - 10); setHp(h => Math.min(100, h + 20));
     sfxFeed(); toast('🍎 小马吃得好开心！');
-    attackAnim(() => {});
+    attackAnim(() => {}, 'sunrise');
   }
 
   function doMagic() {
@@ -438,7 +841,6 @@ export default function App() {
         toast('💥 魔法大招！造成' + dmg + '点伤害！');
       });
       setMg(0);
-      // check level up
       if (lv < 15) {
         setLv(l => {
           const newLv = l + 1;
@@ -452,7 +854,7 @@ export default function App() {
       setPts(p => p - 20);
       setMg(m => Math.min(mgT, m + Math.floor(mgT / 10)));
       sfxMagicCharge();
-      attackAnim(() => applyDamage(8, villainIdx, villainHp));
+      attackAnim(() => applyDamage(8, villainIdx, villainHp), 'rainbow');
       toast('✨ 魔法充能中！');
     }
   }
@@ -465,7 +867,7 @@ export default function App() {
     const earned = t.double ? t.pts * 2 : t.pts;
     setDone(d => [...d, id]); setPts(p => p + earned);
     sfxTask();
-    attackAnim(() => applyDamage(Math.floor(earned / 3), villainIdx, villainHp));
+    attackAnim(() => applyDamage(Math.floor(earned / 3), villainIdx, villainHp), t.attackType);
     toast('太棒了！获得' + earned + '⭐' + (t.double ? ' 双倍！' : ''));
   }
 
@@ -484,7 +886,6 @@ export default function App() {
     toast('小马重生了！加油！');
   }
 
-  // ── COMPUTED ─────────────────────────────────────────
   const lvInfo = LEVELS[Math.min(lv - 1, LEVELS.length - 1)];
   const mgT = mgThreshold(lv);
   const mgFull = mg >= mgT;
@@ -499,9 +900,26 @@ export default function App() {
   ];
   const [c1, c2] = hdrColors[Math.min(lv - 1, 14)];
 
+  // Armor state labels for display
+  const currentV = VILLAINS[Math.min(villainIdx, VILLAINS.length - 1)];
+  const hpPct = Math.max(0, villainHp / currentV.hp);
+  const armorPieces = getArmorPieces(hpPct);
+  const shieldLabels = ['', '盾牌残片', '盾牌碎裂', '盾牌完整'];
+  const armorLabel = hpPct > 0.6 ? '铠甲完整' : hpPct > 0.3 ? '铠甲破损' : hpPct > 0.1 ? '铠甲碎裂' : '铠甲全毁';
+
+  const attackTypeLabels = {
+    sunrise: '☀️ 晨光冲击',
+    bubble: '🫧 泡泡攻击',
+    star_throw: '⭐ 星星飞镖',
+    book_blast: '📚 知识爆破',
+    moon_beam: '🌙 月光光束',
+    rainbow: '🌈 彩虹冲击',
+    laser: '🎯 精准激光',
+    whirlwind: '🌀 旋风清扫',
+  };
+
   return (
     <div className="min-h-screen bg-pink-50 p-2" style={{ fontFamily: 'system-ui, sans-serif' }}>
-      {/* WIN SCREEN */}
       {gameWon && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'linear-gradient(135deg,#fdf4ff,#ede9fe,#fce7f3)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 20 }}>
           <div style={{ fontSize: 64, marginBottom: 12 }}>🌈</div>
@@ -519,7 +937,7 @@ export default function App() {
         </div>
       )}
 
-      <div style={{ maxWidth: 420, margin: '0 auto' }}>
+      <div style={{ maxWidth: 440, margin: '0 auto' }}>
         <div style={{ background: 'white', borderRadius: 20, overflow: 'hidden', border: '0.5px solid #e5e7eb' }}>
           {/* HEADER */}
           <div style={{ background: `linear-gradient(135deg,${c1},${c2})`, textAlign: 'center', padding: '14px 12px 22px', position: 'relative' }}>
@@ -537,10 +955,17 @@ export default function App() {
           )}
 
           {/* ARENA */}
-          <div style={{ position: 'relative', height: 200, background: 'linear-gradient(180deg,#1e1b4b 0%,#312e81 40%,#4c1d95 70%,#7c3aed 100%)', overflow: 'hidden', marginTop: 12 }}>
-            <canvas ref={starsCanvasRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: 168 }} />
-            <canvas ref={beamCanvasRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: 168, pointerEvents: 'none', display: showBeam ? 'block' : 'none', zIndex: 10 }} />
+          <div style={{ position: 'relative', height: 210, background: 'linear-gradient(180deg,#1e1b4b 0%,#312e81 40%,#4c1d95 70%,#7c3aed 100%)', overflow: 'hidden', marginTop: 12 }}>
+            <canvas ref={starsCanvasRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} />
+
+            {/* Attack effect canvas */}
+            <canvas ref={attackCanvasRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', display: showAttackCanvas ? 'block' : 'none', zIndex: 8 }} />
+
+            {/* Magic beam canvas */}
+            <canvas ref={beamCanvasRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', display: showBeam ? 'block' : 'none', zIndex: 10 }} />
+
             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 32, background: 'linear-gradient(180deg,#7c3aed,#5b21b6)', borderTop: '2px solid #a78bfa' }} />
+
             {/* Player */}
             <div style={{ position: 'absolute', bottom: 32, left: 16, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <div style={{ width: 70, height: 5, background: 'rgba(0,0,0,0.4)', borderRadius: 5, overflow: 'hidden', marginBottom: 2 }}>
@@ -550,14 +975,29 @@ export default function App() {
               <div style={{ width: 50, height: 8, background: 'rgba(0,0,0,0.4)', borderRadius: '50%', marginTop: -4 }} />
               <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>甜甜 Lv.{lv}</div>
             </div>
-            {/* Villain */}
-            <div style={{ position: 'absolute', bottom: 32, right: 16, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ width: 70, height: 5, background: 'rgba(0,0,0,0.4)', borderRadius: 5, overflow: 'hidden', marginBottom: 2 }}>
+
+            {/* Villain — wider canvas for shield */}
+            <div style={{ position: 'absolute', bottom: 32, right: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ width: 80, height: 5, background: 'rgba(0,0,0,0.4)', borderRadius: 5, overflow: 'hidden', marginBottom: 2 }}>
                 <div style={{ width: (Math.max(0, villainHp / v.hp) * 100) + '%', height: '100%', background: 'linear-gradient(90deg,#f87171,#ef4444)', borderRadius: 5, transition: 'width 0.4s' }} />
               </div>
-              <canvas ref={villainCanvasRef} width={80} height={110} />
-              <div style={{ width: 50, height: 8, background: 'rgba(0,0,0,0.4)', borderRadius: '50%', marginTop: -4 }} />
+              <canvas ref={villainCanvasRef} width={100} height={140} />
+              <div style={{ width: 55, height: 8, background: 'rgba(0,0,0,0.4)', borderRadius: '50%', marginTop: -4 }} />
               <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{v.name}</div>
+            </div>
+
+            {/* Armor status badge */}
+            <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', flexDirection: 'column', gap: 2, zIndex: 5 }}>
+              {armorPieces.shield > 0 && (
+                <div style={{ fontSize: 8, padding: '1px 5px', borderRadius: 6, background: 'rgba(0,0,0,0.5)', color: armorPieces.shield === 3 ? '#94a3b8' : armorPieces.shield === 2 ? '#fbbf24' : '#f87171', whiteSpace: 'nowrap' }}>
+                  🛡 {shieldLabels[armorPieces.shield]}
+                </div>
+              )}
+              {hpPct < 1 && (
+                <div style={{ fontSize: 8, padding: '1px 5px', borderRadius: 6, background: 'rgba(0,0,0,0.5)', color: hpPct > 0.4 ? '#94a3b8' : hpPct > 0.2 ? '#fbbf24' : '#f87171', whiteSpace: 'nowrap' }}>
+                  🛡 {armorLabel}
+                </div>
+              )}
             </div>
           </div>
 
@@ -572,7 +1012,6 @@ export default function App() {
 
           {/* BARS */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '0 14px 6px' }}>
-            {/* HP bar */}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#6b7280', marginBottom: 2 }}>
                 <span>🍎 饱食度</span><span>{hp}/100</span>
@@ -581,7 +1020,6 @@ export default function App() {
                 <div style={{ width: hp + '%', height: '100%', borderRadius: 9, background: hp < 30 ? 'linear-gradient(90deg,#f87171,#ef4444)' : 'linear-gradient(90deg,#4ade80,#22c55e)', transition: 'width 0.5s' }} />
               </div>
             </div>
-            {/* Magic bar */}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: mgFull ? '#7c3aed' : '#6b7280', marginBottom: 2, fontWeight: mgFull ? 600 : 400 }}>
                 <span>{mgFull ? '⚡ 魔法已满！可发动大招！' : '✨ 魔法储能'}</span>
@@ -622,6 +1060,7 @@ export default function App() {
               TASKS.map(t => {
                 const isDone = done.includes(t.id);
                 const earned = t.double ? t.pts * 2 : t.pts;
+                const atkLabel = attackTypeLabels[t.attackType] || '';
                 return (
                   <div key={t.id} onClick={() => toggleTask(t.id)}
                     style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 9px', borderRadius: 10, border: '0.5px solid #e5e7eb', marginBottom: 5, cursor: 'pointer', background: isDone ? '#f9fafb' : 'white', opacity: isDone ? 0.45 : 1 }}>
@@ -630,7 +1069,9 @@ export default function App() {
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 11, color: isDone ? '#9ca3af' : '#111827', textDecoration: isDone ? 'line-through' : 'none' }}>{t.icon} {t.text}</div>
-                      {t.sub && <div style={{ fontSize: 9, color: '#a855f7', marginTop: 1 }}>⚡ {t.sub}</div>}
+                      <div style={{ fontSize: 9, color: '#a855f7', marginTop: 1 }}>
+                        {atkLabel}{t.sub ? ` · ⚡ ${t.sub}` : ''}
+                      </div>
                     </div>
                     <span style={{ fontSize: 10, fontWeight: 500, padding: '2px 6px', borderRadius: 8, color: t.double ? '#7c3aed' : '#d97706', background: t.double ? '#ede9fe' : '#fef9c3' }}>
                       +{earned}⭐
