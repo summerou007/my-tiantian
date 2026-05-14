@@ -29,6 +29,7 @@ import p15 from './h/15.png';
 
 // 把它们存到一个数组里，方便根据等级切换
 const PONY_PICS = [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15];
+
 // 2. 这里的 icon1 到 icon9 千万不能加引号！
 const TASKS = [
   { id: 1, icon: icon1, text: '听到闹钟立刻起床不赖床', pts: 15, double: false, attackType: 'sunrise' },
@@ -119,93 +120,6 @@ function drawStars(canvas) {
   }
 }
 
-function drawPlayer(canvas, lv, hp, mg, anim) {
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, 80, 110);
-  const lvInfo = LEVELS[Math.min(lv - 1, LEVELS.length - 1)];
-  const mgT = mgThreshold();
-  const mgFull = mg >= mgT;
-  const mgPct = Math.min(1, mg / mgT);
-  const bodyColor = hp >= 70 ? lvInfo.color : hp >= 40 ? '#fef9c3' : '#fecaca';
-  const darkColor = hp >= 70 ? lvInfo.dark : '#ef4444';
-
-  if (mgFull) { ctx.shadowColor = '#fbbf24'; ctx.shadowBlur = 20; }
-  else if (mgPct > 0.6) { ctx.shadowColor = lvInfo.dark; ctx.shadowBlur = 10 * mgPct; }
-  else { ctx.shadowBlur = 0; }
-
-  const offsetY = anim === 'jump' ? -18 : anim === 'attack' ? -8 : 0;
-  const ox = anim === 'attack' ? 12 : 0;
-  const y = offsetY;
-
-  ctx.shadowBlur = 0;
-  ctx.beginPath(); ctx.moveTo(15 + ox, 75 + y); ctx.quadraticCurveTo(2, 65 + y, 8, 50 + y);
-  ctx.strokeStyle = darkColor; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.stroke();
-
-  if (mgFull) { ctx.shadowColor = '#fbbf24'; ctx.shadowBlur = 20; }
-  else if (mgPct > 0.6) { ctx.shadowColor = lvInfo.dark; ctx.shadowBlur = 10 * mgPct; }
-
-  ctx.beginPath(); ctx.ellipse(40 + ox, 75 + y, 22, 17, 0, 0, Math.PI * 2);
-  ctx.fillStyle = bodyColor; ctx.fill(); ctx.strokeStyle = darkColor; ctx.lineWidth = 1.5; ctx.stroke();
-
-  ctx.beginPath(); ctx.ellipse(52 + ox, 58 + y, 13, 15, Math.PI / 8, 0, Math.PI * 2);
-  ctx.fillStyle = bodyColor; ctx.fill(); ctx.strokeStyle = darkColor; ctx.lineWidth = 1.5; ctx.stroke();
-
-  [[26,90],[34,90],[46,90],[54,90]].forEach(([lx, ly]) => {
-    ctx.beginPath(); ctx.moveTo(lx + ox, ly - 12 + y); ctx.lineTo(lx + ox, ly + y);
-    ctx.strokeStyle = darkColor; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.stroke();
-    ctx.beginPath(); ctx.arc(lx + ox, ly + y, 4, 0, Math.PI * 2);
-    ctx.fillStyle = darkColor; ctx.fill();
-  });
-
-  ctx.shadowBlur = 0;
-  ctx.beginPath(); ctx.arc(56 + ox, 52 + y, 3.5, 0, Math.PI * 2); ctx.fillStyle = '#1f2937'; ctx.fill();
-  ctx.beginPath(); ctx.arc(57.5 + ox, 51 + y, 1.2, 0, Math.PI * 2); ctx.fillStyle = 'white'; ctx.fill();
-  ctx.beginPath(); ctx.ellipse(52 + ox, 57 + y, 3, 2, 0, 0, Math.PI * 2);
-  ctx.fillStyle = `rgba(253,164,175,${hp >= 50 ? 0.9 : 0.4})`; ctx.fill();
-  ctx.beginPath(); ctx.moveTo(44 + ox, 44 + y); ctx.bezierCurveTo(38 + ox, 35 + y, 50 + ox, 30 + y, 52 + ox, 40 + y);
-  ctx.bezierCurveTo(54 + ox, 30 + y, 62 + ox, 32 + y, 60 + ox, 44 + y);
-  ctx.fillStyle = darkColor; ctx.fill();
-
-  if (lv >= 2) {
-    ctx.beginPath(); ctx.moveTo(58 + ox, 44 + y); ctx.lineTo(62 + ox, 28 + y); ctx.lineTo(54 + ox, 40 + y);
-    ctx.fillStyle = '#fbbf24'; ctx.fill();
-    if (mgFull) {
-      ctx.shadowColor = '#fbbf24'; ctx.shadowBlur = 15;
-      ctx.beginPath(); ctx.moveTo(62 + ox, 28 + y);
-      for (let i = 0; i < 5; i++) { ctx.lineTo(62 + ox + Math.cos(i * 1.2) * 6, 28 + y - i * 3); }
-      ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1.5; ctx.stroke();
-      ctx.shadowBlur = 0;
-    }
-  }
-
-  if (lv >= 5) {
-    ctx.save(); ctx.globalAlpha = 0.7;
-    ctx.beginPath(); ctx.moveTo(22 + ox, 68 + y); ctx.bezierCurveTo(5, 50 + y, 8, 40 + y, 18 + ox, 55 + y);
-    ctx.bezierCurveTo(10, 58 + y, 15, 65 + y, 22 + ox, 68 + y);
-    ctx.fillStyle = lvInfo.color; ctx.fill(); ctx.strokeStyle = lvInfo.dark; ctx.lineWidth = 1; ctx.stroke();
-    ctx.restore();
-  }
-
-  if (lv >= 3 && mgPct > 0.3) {
-    const count = Math.floor(mgPct * 6);
-    for (let i = 0; i < count; i++) {
-      const px = 30 + ox + Math.cos(Date.now() / 300 + i) * 20;
-      const py = 60 + y + Math.sin(Date.now() / 300 + i * 1.3) * 15;
-      ctx.beginPath(); ctx.arc(px, py, 1.5, 0, Math.PI * 2);
-      ctx.fillStyle = lvInfo.dark; ctx.fill();
-    }
-  }
-
-  if (lv >= 10) {
-    ctx.save(); ctx.globalAlpha = 0.25;
-    ctx.beginPath(); ctx.ellipse(40 + ox, 68 + y, 30, 22, 0, 0, Math.PI * 2);
-    const grad = ctx.createRadialGradient(40 + ox, 68 + y, 5, 40 + ox, 68 + y, 30);
-    grad.addColorStop(0, lvInfo.dark); grad.addColorStop(1, 'transparent');
-    ctx.fillStyle = grad; ctx.fill(); ctx.restore();
-  }
-}
-
 // ── VILLAIN DRAW with armor/shield ──────────────────────
 function drawVillain(canvas, villainIdx, villainHp, flash, armorPieces) {
   if (!canvas) return;
@@ -230,7 +144,6 @@ function drawVillain(canvas, villainIdx, villainHp, flash, armorPieces) {
   const vi = villainIdx % 5;
   const eyeY = vi === 2 ? 82 : vi === 3 ? 74 : 76;
 
-  // Draw villain body
   if (vi === 0) {
     ctx.beginPath(); ctx.ellipse(50, 82, 27, 30, 0, 0, Math.PI * 2);
     ctx.fillStyle = v.body; ctx.fill();
@@ -260,7 +173,6 @@ function drawVillain(canvas, villainIdx, villainHp, flash, armorPieces) {
 
   ctx.shadowBlur = 0;
 
-  // Eyes
   ctx.beginPath(); ctx.arc(42, eyeY, 6, 0, Math.PI * 2); ctx.fillStyle = '#111'; ctx.fill();
   ctx.beginPath(); ctx.arc(58, eyeY, 6, 0, Math.PI * 2); ctx.fillStyle = '#111'; ctx.fill();
   if (angry || hpPct < 0.5) {
@@ -283,7 +195,6 @@ function drawVillain(canvas, villainIdx, villainHp, flash, armorPieces) {
   const chestPlate = armorPieces.chest; // 0..2
   const helm = armorPieces.helm;        // 0..2
 
-  // Shield (left side)
   if (shield > 0) {
     ctx.save();
     ctx.globalAlpha = shield === 3 ? 0.95 : shield === 2 ? 0.65 : 0.35;
@@ -291,14 +202,12 @@ function drawVillain(canvas, villainIdx, villainHp, flash, armorPieces) {
     ctx.moveTo(10, 60); ctx.lineTo(2, 70); ctx.lineTo(2, 100); ctx.lineTo(10, 114); ctx.lineTo(26, 100); ctx.lineTo(26, 70); ctx.closePath();
     ctx.fillStyle = v.shieldColor;
     ctx.fill();
-    // Shield emblem
     if (shield === 3) {
       ctx.fillStyle = 'rgba(255,255,255,0.6)';
       ctx.font = 'bold 14px system-ui';
       ctx.textAlign = 'center';
       ctx.fillText('✦', 14, 90);
     }
-    // Cracks on shield
     if (shield <= 2) {
       ctx.strokeStyle = 'rgba(0,0,0,0.5)';
       ctx.lineWidth = 1.5;
@@ -311,7 +220,6 @@ function drawVillain(canvas, villainIdx, villainHp, flash, armorPieces) {
       ctx.beginPath(); ctx.moveTo(5, 95); ctx.lineTo(22, 78); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(10, 108); ctx.lineTo(24, 85); ctx.stroke();
     }
-    // Shield border
     ctx.strokeStyle = 'rgba(255,255,255,0.4)';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -320,32 +228,26 @@ function drawVillain(canvas, villainIdx, villainHp, flash, armorPieces) {
     ctx.restore();
   }
 
-  // Helmet
   if (helm > 0) {
     ctx.save();
     ctx.globalAlpha = helm === 2 ? 0.9 : 0.5;
-    // Helm base
     ctx.beginPath();
     ctx.arc(50, eyeY - 30, 22, Math.PI, 0, false);
     ctx.lineTo(70, eyeY - 16); ctx.lineTo(30, eyeY - 16); ctx.closePath();
     ctx.fillStyle = v.armorColor; ctx.fill();
-    // Helm visor slit
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.fillRect(36, eyeY - 24, 28, 5);
-    // Cracks
     if (helm === 1) {
       ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.moveTo(40, eyeY - 36); ctx.lineTo(52, eyeY - 20); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(55, eyeY - 38); ctx.lineTo(48, eyeY - 18); ctx.stroke();
     }
-    // Helmet shine
     ctx.save(); ctx.globalAlpha = 0.3;
     ctx.beginPath(); ctx.arc(42, eyeY - 36, 8, 0.8, 2.2, false);
     ctx.strokeStyle = 'white'; ctx.lineWidth = 3; ctx.stroke(); ctx.restore();
     ctx.restore();
   }
 
-  // Shoulder pads
   if (shoulderL > 0) {
     ctx.save();
     ctx.globalAlpha = shoulderL === 2 ? 0.85 : 0.45;
@@ -369,27 +271,23 @@ function drawVillain(canvas, villainIdx, villainHp, flash, armorPieces) {
     ctx.restore();
   }
 
-  // Chest plate
   if (chestPlate > 0) {
     ctx.save();
     ctx.globalAlpha = chestPlate === 2 ? 0.8 : 0.4;
     ctx.beginPath();
     ctx.roundRect(32, 66, 36, 34, 4);
     ctx.fillStyle = v.armorColor; ctx.fill();
-    // Plate details
     if (chestPlate === 2) {
       ctx.fillStyle = 'rgba(255,255,255,0.25)';
       ctx.fillRect(36, 70, 12, 4);
       ctx.fillRect(52, 70, 12, 4);
     }
-    // Cracks
     if (chestPlate === 1) {
       ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.moveTo(38, 68); ctx.lineTo(50, 90); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(55, 70); ctx.lineTo(44, 98); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(35, 80); ctx.lineTo(65, 72); ctx.stroke();
     }
-    // Plate border
     ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.roundRect(32, 66, 36, 34, 4); ctx.stroke();
     ctx.restore();
@@ -398,8 +296,6 @@ function drawVillain(canvas, villainIdx, villainHp, flash, armorPieces) {
 
 // ── COMPUTE ARMOR STATE from HP pct ──────────────────
 function getArmorPieces(hpPct) {
-  // hpPct 1.0 → all armor; 0 → no armor
-  // shield: 3 (full) → 2 (cracked) → 1 (shattered) → 0 (gone)
   const shield = hpPct > 0.75 ? 3 : hpPct > 0.55 ? 2 : hpPct > 0.3 ? 1 : 0;
   const helm = hpPct > 0.6 ? 2 : hpPct > 0.25 ? 1 : 0;
   const shoulderL = hpPct > 0.5 ? 2 : hpPct > 0.2 ? 1 : 0;
@@ -414,18 +310,16 @@ function drawAttackEffect(canvas, attackType, progress, lvInfo) {
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const w = canvas.width, h = canvas.height;
-  const t = progress; // 0..1
+  const t = progress; 
 
   switch (attackType) {
     case 'sunrise': {
-      // Golden rays from left expanding rightward
       const cx = w * 0.15, cy = h * 0.5;
       const maxR = w * t * 1.2;
       ctx.save(); ctx.globalAlpha = Math.sin(t * Math.PI) * 0.7;
       const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxR);
       grad.addColorStop(0, '#fbbf24'); grad.addColorStop(0.4, '#f97316'); grad.addColorStop(1, 'transparent');
       ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(cx, cy, maxR, 0, Math.PI * 2); ctx.fill();
-      // Rays
       for (let i = 0; i < 8; i++) {
         const angle = (i / 8) * Math.PI * 2;
         ctx.globalAlpha = Math.sin(t * Math.PI) * 0.5;
@@ -438,7 +332,6 @@ function drawAttackEffect(canvas, attackType, progress, lvInfo) {
       break;
     }
     case 'bubble': {
-      // Colorful bubbles flying from left to right
       const bubbles = [
         { x: 0.1, y: 0.3, size: 18, color: '#60a5fa', delay: 0 },
         { x: 0.15, y: 0.6, size: 14, color: '#f472b6', delay: 0.1 },
@@ -454,7 +347,6 @@ function drawAttackEffect(canvas, attackType, progress, lvInfo) {
         ctx.beginPath(); ctx.arc(bx, by, b.size, 0, Math.PI * 2);
         ctx.strokeStyle = b.color; ctx.lineWidth = 2.5; ctx.stroke();
         ctx.fillStyle = b.color + '33'; ctx.fill();
-        // shine
         ctx.beginPath(); ctx.arc(bx - b.size * 0.3, by - b.size * 0.3, b.size * 0.25, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fill();
         ctx.restore();
@@ -462,7 +354,6 @@ function drawAttackEffect(canvas, attackType, progress, lvInfo) {
       break;
     }
     case 'star_throw': {
-      // Stars shooting from left to right
       const stars = [
         { x0: 0.05, y0: 0.4, vy: -0.05, delay: 0, color: '#fbbf24' },
         { x0: 0.08, y0: 0.6, vy: 0.03, delay: 0.08, color: '#f472b6' },
@@ -483,7 +374,6 @@ function drawAttackEffect(canvas, attackType, progress, lvInfo) {
           else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
         }
         ctx.closePath(); ctx.fillStyle = s.color; ctx.fill();
-        // trail
         ctx.globalAlpha *= 0.4;
         for (let tr = 1; tr <= 3; tr++) {
           const tx = sx - (w * 0.9 * st / 3) * tr * 0.1;
@@ -496,17 +386,14 @@ function drawAttackEffect(canvas, attackType, progress, lvInfo) {
       break;
     }
     case 'book_blast': {
-      // Pages/book pages flying and exploding
       ctx.save();
       const bx = w * (0.05 + t * 0.7), by = h * 0.5;
       ctx.globalAlpha = Math.sin(t * Math.PI) * 0.85;
-      // Book
       ctx.fillStyle = '#3b82f6';
       ctx.fillRect(bx - 16, by - 20, 32, 28);
       ctx.fillStyle = 'white';
       ctx.fillRect(bx - 12, by - 16, 10, 20);
       ctx.fillRect(bx + 2, by - 16, 10, 20);
-      // Flying pages
       for (let p = 0; p < 5; p++) {
         const pt = t - p * 0.08;
         if (pt < 0) continue;
@@ -517,7 +404,6 @@ function drawAttackEffect(canvas, attackType, progress, lvInfo) {
         ctx.translate(px, py); ctx.rotate(pt * 5 + p);
         ctx.fillStyle = 'white'; ctx.strokeStyle = '#93c5fd'; ctx.lineWidth = 1;
         ctx.fillRect(-8, -10, 16, 20); ctx.strokeRect(-8, -10, 16, 20);
-        // Lines on page
         ctx.strokeStyle = '#bfdbfe'; ctx.lineWidth = 0.8;
         for (let l = 0; l < 4; l++) { ctx.beginPath(); ctx.moveTo(-6, -6 + l * 4); ctx.lineTo(6, -6 + l * 4); ctx.stroke(); }
         ctx.restore();
@@ -526,11 +412,9 @@ function drawAttackEffect(canvas, attackType, progress, lvInfo) {
       break;
     }
     case 'moon_beam': {
-      // Purple/blue crescent beam
       ctx.save();
       const progress2 = t;
       ctx.globalAlpha = Math.sin(t * Math.PI) * 0.85;
-      // Beam
       const grad = ctx.createLinearGradient(0, h * 0.45, w * progress2, h * 0.55);
       grad.addColorStop(0, '#a78bfa');
       grad.addColorStop(0.5, '#7c3aed');
@@ -541,14 +425,12 @@ function drawAttackEffect(canvas, attackType, progress, lvInfo) {
       ctx.quadraticCurveTo(w * progress2 * 0.5, h * 0.7, 0, h * 0.55);
       ctx.closePath();
       ctx.fillStyle = grad; ctx.fill();
-      // Stars along beam
       for (let s = 0; s < 6; s++) {
         const st = s / 6 * progress2;
         const sx = w * st, sy = h * 0.5 + Math.sin(s * 2) * 15;
         ctx.beginPath(); ctx.arc(sx, sy, 3, 0, Math.PI * 2);
         ctx.fillStyle = '#fbbf24'; ctx.fill();
       }
-      // Crescent at tip
       if (progress2 > 0.5) {
         const tip = { x: w * progress2, y: h * 0.5 };
         ctx.beginPath(); ctx.arc(tip.x, tip.y, 18, 0, Math.PI * 2);
@@ -560,7 +442,6 @@ function drawAttackEffect(canvas, attackType, progress, lvInfo) {
       break;
     }
     case 'rainbow': {
-      // Rainbow arc sweeping across
       ctx.save();
       const colors = ['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#8b5cf6','#ec4899'];
       const maxAngle = t * Math.PI;
@@ -569,7 +450,6 @@ function drawAttackEffect(canvas, attackType, progress, lvInfo) {
         ctx.arc(w * 0.1, h * 0.9, 60 + i * 14, Math.PI, Math.PI + maxAngle, false);
         ctx.strokeStyle = col; ctx.lineWidth = 8; ctx.globalAlpha = 0.8; ctx.stroke();
       });
-      // Sparkles at arc tip
       if (t > 0.3) {
         const tipAngle = Math.PI + maxAngle;
         const tipR = 60 + 3.5 * 14;
@@ -585,10 +465,8 @@ function drawAttackEffect(canvas, attackType, progress, lvInfo) {
       break;
     }
     case 'laser': {
-      // Red targeting laser then beam
       ctx.save();
       if (t < 0.4) {
-        // Targeting phase: crosshair moving to villain
         const cx = w * (0.3 + t * 1.5), cy = h * 0.5;
         ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 1; ctx.globalAlpha = 0.7;
         ctx.setLineDash([4, 4]);
@@ -597,7 +475,6 @@ function drawAttackEffect(canvas, attackType, progress, lvInfo) {
         ctx.setLineDash([]);
         ctx.beginPath(); ctx.arc(cx, cy, 8, 0, Math.PI * 2); ctx.stroke();
       } else {
-        // Beam phase
         const bt = (t - 0.4) / 0.6;
         ctx.globalAlpha = 1 - bt * 0.7;
         ctx.beginPath();
@@ -606,7 +483,6 @@ function drawAttackEffect(canvas, attackType, progress, lvInfo) {
         ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 4 + bt * 2; ctx.stroke();
         ctx.strokeStyle = '#fca5a5'; ctx.lineWidth = 2; ctx.stroke();
         ctx.strokeStyle = 'white'; ctx.lineWidth = 1; ctx.stroke();
-        // Impact circle
         ctx.beginPath(); ctx.arc(w * 0.85, h * 0.5, bt * 25, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(239,68,68,${(1 - bt) * 0.6})`; ctx.fill();
       }
@@ -614,7 +490,6 @@ function drawAttackEffect(canvas, attackType, progress, lvInfo) {
       break;
     }
     case 'whirlwind': {
-      // Spinning vortex moving right
       ctx.save();
       const wx = w * (0.1 + t * 0.8), wy = h * 0.5;
       ctx.globalAlpha = Math.sin(t * Math.PI) * 0.8;
@@ -625,7 +500,6 @@ function drawAttackEffect(canvas, attackType, progress, lvInfo) {
         ctx.strokeStyle = ring === 0 ? '#60a5fa' : ring === 1 ? '#a78bfa' : '#34d399';
         ctx.lineWidth = 4 - ring; ctx.stroke();
       }
-      // Debris particles
       for (let d = 0; d < 6; d++) {
         const da = d / 6 * Math.PI * 2 + t * 10;
         const dr = 20 + Math.sin(t * 5 + d) * 10;
@@ -636,7 +510,6 @@ function drawAttackEffect(canvas, attackType, progress, lvInfo) {
       break;
     }
     default: {
-      // Generic flash
       ctx.save();
       ctx.globalAlpha = Math.sin(t * Math.PI) * 0.5;
       ctx.fillStyle = '#fbbf24';
@@ -645,7 +518,6 @@ function drawAttackEffect(canvas, attackType, progress, lvInfo) {
     }
   }
 
-  // ── ARMOR BREAK PARTICLES at end ──────────────────
   if (t > 0.65) {
     const bt = (t - 0.65) / 0.35;
     const count = 10;
@@ -685,10 +557,8 @@ export default function App() {
   const [villainFlash, setVillainFlash] = useState(false);
   const [showBeam, setShowBeam]     = useState(false);
   const [currentAttackType, setCurrentAttackType] = useState(null);
-  const [attackProgress, setAttackProgress] = useState(0);
   const [showAttackCanvas, setShowAttackCanvas] = useState(false);
 
-  const playerCanvasRef  = useRef(null);
   const villainCanvasRef = useRef(null);
   const starsCanvasRef   = useRef(null);
   const beamCanvasRef    = useRef(null);
@@ -724,23 +594,11 @@ export default function App() {
   useEffect(() => { drawStars(starsCanvasRef.current); }, []);
 
   useEffect(() => {
-    drawPlayer(playerCanvasRef.current, lv, hp, mg, playerAnim);
-  }, [lv, hp, mg, playerAnim]);
-
-  useEffect(() => {
     const v = VILLAINS[Math.min(villainIdx, VILLAINS.length - 1)];
     const hpPct = Math.max(0, villainHp / v.hp);
     const armor = getArmorPieces(hpPct);
     drawVillain(villainCanvasRef.current, villainIdx, villainHp, villainFlash, armor);
   }, [villainIdx, villainHp, villainFlash]);
-
-  useEffect(() => {
-    if (lv < 3) return;
-    const id = setInterval(() => {
-      drawPlayer(playerCanvasRef.current, lv, hp, mg, 'idle');
-    }, 500);
-    return () => clearInterval(id);
-  }, [lv, hp, mg]);
 
   // Attack effect animation loop
   useEffect(() => {
@@ -767,7 +625,7 @@ export default function App() {
     }
     attackAnimRef.current = requestAnimationFrame(frame);
     return () => { if (attackAnimRef.current) cancelAnimationFrame(attackAnimRef.current); };
-  }, [currentAttackType, showAttackCanvas]);
+  }, [currentAttackType, showAttackCanvas, lv]);
 
   function toast(msg) {
     setMessage(msg);
@@ -778,7 +636,6 @@ export default function App() {
   function attackAnim(onHit, attackType) {
     const phases = ['idle', 'jump', 'attack', 'attack', 'jump', 'idle'];
     let i = 0;
-    // Start attack effect
     if (attackType) {
       setCurrentAttackType(attackType);
       setShowAttackCanvas(true);
@@ -861,19 +718,17 @@ export default function App() {
     attackAnim(() => {}, null);
   }
 
-  // Fire the ultimate magic blast — only callable when mg is full
   function fireUltimate() {
     if (hp <= 0) return;
     const mgT = mgThreshold();
     if (mg < mgT) { toast('魔法还没蓄满！继续完成挑战！'); return; }
     sfxMagicBeam();
-    const dmg = Math.floor(villainHp * 0.45 + 30); // big hit: 45% current hp + 30 flat
+    const dmg = Math.floor(villainHp * 0.45 + 30); 
     magicBeamAnim(() => {
       applyDamage(dmg, villainIdx, villainHp);
       toast('💥 大招释放！造成' + dmg + '点伤害！');
     });
-    setMg(0); // drain magic after use
-    // level up on ultimate fire
+    setMg(0); 
     if (lv < 15) {
       setTimeout(() => {
         setLv(l => {
@@ -892,14 +747,13 @@ export default function App() {
     if (done.includes(id)) return;
     const t = TASKS.find(t => t.id === id); if (!t) return;
     const earnedPts = t.pts;
-    const earnedMg  = t.double ? t.mg * 2 : t.mg;
+    const earnedMg  = t.double ? t.pts * 2 : t.pts;
     const mgT = mgThreshold();
     setDone(d => [...d, id]);
     setPts(p => p + earnedPts);
     setMg(m => {
       const newMg = Math.min(mgT, m + earnedMg);
       if (newMg >= mgT && m < mgT) {
-        // magic just filled up!
         setTimeout(() => {
           sfxMagicCharge();
           toast('⚡ 魔法已蓄满！快发动大招！');
@@ -908,7 +762,6 @@ export default function App() {
       return newMg;
     });
     sfxTask();
-    // task attack hits villain directly (small dmg) — immediate feedback
     const directDmg = Math.floor(earnedPts / 5) + 3;
     attackAnim(() => applyDamage(directDmg, villainIdx, villainHp), t.attackType);
     toast(`太棒了！+${earnedPts}⭐  魔法+${earnedMg}✨`);
@@ -943,7 +796,6 @@ export default function App() {
   ];
   const [c1, c2] = hdrColors[Math.min(lv - 1, 14)];
 
-  // Armor state labels for display
   const currentV = VILLAINS[Math.min(villainIdx, VILLAINS.length - 1)];
   const hpPct = Math.max(0, villainHp / currentV.hp);
   const armorPieces = getArmorPieces(hpPct);
@@ -1000,11 +852,7 @@ export default function App() {
           {/* ARENA */}
           <div style={{ position: 'relative', height: 210, background: 'linear-gradient(180deg,#1e1b4b 0%,#312e81 40%,#4c1d95 70%,#7c3aed 100%)', overflow: 'hidden', marginTop: 12 }}>
             <canvas ref={starsCanvasRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} />
-
-            {/* Attack effect canvas */}
             <canvas ref={attackCanvasRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', display: showAttackCanvas ? 'block' : 'none', zIndex: 8 }} />
-
-            {/* Magic beam canvas */}
             <canvas ref={beamCanvasRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', display: showBeam ? 'block' : 'none', zIndex: 10 }} />
 
             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 32, background: 'linear-gradient(180deg,#7c3aed,#5b21b6)', borderTop: '2px solid #a78bfa' }} />
@@ -1014,12 +862,24 @@ export default function App() {
               <div style={{ width: 70, height: 5, background: 'rgba(0,0,0,0.4)', borderRadius: 5, overflow: 'hidden', marginBottom: 2 }}>
                 <div style={{ width: hp + '%', height: '100%', background: 'linear-gradient(90deg,#4ade80,#22c55e)', borderRadius: 5, transition: 'width 0.4s' }} />
               </div>
-              <img    src={PONY_PICS[Math.min(lv - 1, 14)]}    alt="甜甜的小马"    style={{      width: 85,      height: 85,      objectFit: 'contain',     borderRadius: '8px',     // 这里保留了攻击和跳跃的动画效果     transform: playerAnim === 'jump' ? 'translateY(-18px)' : playerAnim === 'attack' ? 'translateX(15px)' : 'none',     transition: 'transform 0.1s ease',     // 没血时变灰，魔法满时会发金光！     filter: hp <= 0 ? 'grayscale(100%) opacity(70%)' : (mg >= mgThreshold(lv) ? 'drop-shadow(0 0 12px #fbbf24)' : 'none')   }}  />
+              <img    
+                src={PONY_PICS[Math.min(lv - 1, 14)]}    
+                alt="甜甜的小马"    
+                style={{      
+                  width: 85,      
+                  height: 85,      
+                  objectFit: 'contain',     
+                  borderRadius: '8px',     
+                  transform: playerAnim === 'jump' ? 'translateY(-18px)' : playerAnim === 'attack' ? 'translateX(15px)' : 'none',     
+                  transition: 'transform 0.1s ease',     
+                  filter: hp <= 0 ? 'grayscale(100%) opacity(70%)' : (mg >= mgThreshold() ? 'drop-shadow(0 0 12px #fbbf24)' : 'none')   
+                }}  
+              />
               <div style={{ width: 50, height: 8, background: 'rgba(0,0,0,0.4)', borderRadius: '50%', marginTop: -4 }} />
               <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>甜甜 Lv.{lv}</div>
             </div>
 
-            {/* Villain — wider canvas for shield */}
+            {/* Villain */}
             <div style={{ position: 'absolute', bottom: 32, right: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <div style={{ width: 80, height: 5, background: 'rgba(0,0,0,0.4)', borderRadius: 5, overflow: 'hidden', marginBottom: 2 }}>
                 <div style={{ width: (Math.max(0, villainHp / v.hp) * 100) + '%', height: '100%', background: 'linear-gradient(90deg,#f87171,#ef4444)', borderRadius: 5, transition: 'width 0.4s' }} />
@@ -1029,7 +889,6 @@ export default function App() {
               <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{v.name}</div>
             </div>
 
-            {/* Armor status badge */}
             <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', flexDirection: 'column', gap: 2, zIndex: 5 }}>
               {armorPieces.shield > 0 && (
                 <div style={{ fontSize: 8, padding: '1px 5px', borderRadius: 6, background: 'rgba(0,0,0,0.5)', color: armorPieces.shield === 3 ? '#94a3b8' : armorPieces.shield === 2 ? '#fbbf24' : '#f87171', whiteSpace: 'nowrap' }}>
@@ -1059,7 +918,6 @@ export default function App() {
 
           {/* BARS */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '0 14px 6px' }}>
-            {/* HP */}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#6b7280', marginBottom: 2 }}>
                 <span>🍎 体力</span><span>{hp}/100</span>
@@ -1068,7 +926,6 @@ export default function App() {
                 <div style={{ width: hp + '%', height: '100%', borderRadius: 9, background: hp < 30 ? 'linear-gradient(90deg,#f87171,#ef4444)' : 'linear-gradient(90deg,#4ade80,#22c55e)', transition: 'width 0.5s' }} />
               </div>
             </div>
-            {/* Magic charge — tasks fill this */}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, marginBottom: 2, fontWeight: mgFull ? 600 : 400, color: mgFull ? '#7c3aed' : '#6b7280' }}>
                 <span>{mgFull ? '⚡ 大招蓄满！快释放！' : `✨ 魔法蓄能 — 完成挑战来充能`}</span>
@@ -1076,7 +933,6 @@ export default function App() {
               </div>
               <div style={{ height: 9, background: '#f3f4f6', borderRadius: 9, overflow: 'hidden', border: '0.5px solid #e5e7eb', position: 'relative' }}>
                 <div style={{ width: (mg / mgT * 100) + '%', height: '100%', borderRadius: 9, background: mgFull ? 'linear-gradient(90deg,#fbbf24,#f59e0b)' : 'linear-gradient(90deg,#c084fc,#a855f7)', transition: 'width 0.5s' }} />
-                {/* Segment markers every 20% */}
                 {[1,2,3,4].map(i => (
                   <div key={i} style={{ position: 'absolute', top: 0, left: (i * 20) + '%', width: 1, height: '100%', background: 'rgba(255,255,255,0.5)' }} />
                 ))}
@@ -1086,14 +942,12 @@ export default function App() {
 
           {/* ACTIONS */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, padding: '4px 14px 8px' }}>
-            {/* Feed — costs 10 stars, restores HP */}
             <button onClick={feedPet} disabled={dead || pts < 10 || hp >= 100}
               style={{ padding: '10px 6px', borderRadius: 12, fontSize: 12, fontWeight: 500, border: '0.5px solid #86efac', cursor: (dead || pts < 10 || hp >= 100) ? 'not-allowed' : 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, color: '#15803d', background: '#f0fdf4', opacity: (dead || pts < 10 || hp >= 100) ? 0.4 : 1 }}>
               🍎
               <span style={{ fontSize: 11 }}>喂食回血</span>
               <span style={{ fontSize: 10, color: '#6b7280' }}>-10⭐ / +20体力</span>
             </button>
-            {/* Ultimate — only available when magic full */}
             <button onClick={fireUltimate} disabled={dead || !mgFull}
               style={{
                 padding: '10px 6px', borderRadius: 12, fontSize: 12, fontWeight: 600,
@@ -1141,19 +995,19 @@ export default function App() {
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: 11, color: isDone ? '#9ca3af' : '#111827', textDecoration: isDone ? 'line-through' : 'none' }}>
-  <img 
-    src={t.icon} 
-    alt="task icon" 
-    style={{ 
-      width: 20, 
-      height: 20, 
-      objectFit: 'cover', 
-      borderRadius: '4px',
-      filter: isDone ? 'grayscale(100%) opacity(50%)' : 'none' 
-    }} 
-  />
-  <span>{t.text}</span>
-</div>
+                        <img 
+                          src={t.icon} 
+                          alt="task icon" 
+                          style={{ 
+                            width: 20, 
+                            height: 20, 
+                            objectFit: 'cover', 
+                            borderRadius: '4px',
+                            filter: isDone ? 'grayscale(100%) opacity(50%)' : 'none' 
+                          }} 
+                        />
+                        <span>{t.text}</span>
+                      </div>
                       <div style={{ fontSize: 9, color: '#a855f7', marginTop: 1 }}>
                         {atkLabel}{t.sub ? ` · ⚡ ${t.sub}` : ''}
                       </div>
