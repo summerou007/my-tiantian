@@ -10,22 +10,22 @@ import icon6 from './icon6.jpg';
 import icon7 from './icon7.jpg';
 import icon8 from './icon8.jpg';
 import icon9 from './icon9.jpg';
-// 引入 15 个等级的小马图片
-import p1 from './1.png';
-import p2 from './2.png';
-import p3 from './3.png';
-import p4 from './4.png';
-import p5 from './5.png';
-import p6 from './6.png';
-import p7 from './7.png';
-import p8 from './8.png';
-import p9 from './9.png';
-import p10 from './10.png';
-import p11 from './11.png';
-import p12 from './12.png';
-import p13 from './13.png';
-import p14 from './14.png';
-import p15 from './15.png';
+// 引入 15 个等级的小马图片（注意 1.png 在 h 文件夹下）
+import p1 from './h/1.png';
+import p2 from './h/2.png';
+import p3 from './h/3.png';
+import p4 from './h/4.png';
+import p5 from './h/5.png';
+import p6 from './h/6.png';
+import p7 from './h/7.png';
+import p8 from './h/8.png';
+import p9 from './h/9.png';
+import p10 from './h/10.png';
+import p11 from './h/11.png';
+import p12 from './h/12.png';
+import p13 from './h/13.png';
+import p14 from './h/14.png';
+import p15 from './h/15.png';
 
 // 把它们存到一个数组里，方便根据等级切换
 const PONY_PICS = [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15];
