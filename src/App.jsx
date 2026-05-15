@@ -1057,6 +1057,44 @@ export default function App() {
                 <div style={{ width: hp + '%', height: '100%', borderRadius: 9, background: hp < 30 ? 'linear-gradient(90deg,#f87171,#ef4444)' : 'linear-gradient(90deg,#4ade80,#22c55e)', transition: 'width 0.5s' }} />
               </div>
             </div>
+            {/* 等级进度条 */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#6b7280', marginBottom: 2 }}>
+                <span>⭐ 等级进度</span>
+                <span style={{ color: lv >= 15 ? '#a855f7' : '#6b7280' }}>
+                  {lv >= 15 ? '已满级！' : `Lv.${lv} → Lv.${lv + 1}${mgFull ? ' · 发大招可升级！' : ''}`}
+                </span>
+              </div>
+              <div style={{ height: 9, background: '#f3f4f6', borderRadius: 9, overflow: 'hidden', border: '0.5px solid #e5e7eb', position: 'relative' }}>
+                {/* 底层：总等级进度（灰色节段） */}
+                {Array.from({ length: 14 }, (_, i) => (
+                  <div key={i} style={{
+                    position: 'absolute', top: 0,
+                    left: (i / 14 * 100) + '%',
+                    width: (1 / 14 * 100) + '%',
+                    height: '100%',
+                    background: i < lv - 1
+                      ? `linear-gradient(90deg,${lvInfo.dark},${lvInfo.dark}cc)`
+                      : 'transparent',
+                    borderRight: i < 13 ? '1px solid rgba(255,255,255,0.4)' : 'none',
+                    transition: 'background 0.4s',
+                  }} />
+                ))}
+                {/* 当前等级内魔法进度（亮色叠加） */}
+                {lv < 15 && (
+                  <div style={{
+                    position: 'absolute', top: 0,
+                    left: ((lv - 1) / 14 * 100) + '%',
+                    width: (mg / mgT / 14 * 100) + '%',
+                    height: '100%',
+                    background: mgFull
+                      ? 'linear-gradient(90deg,#fbbf24,#f59e0b)'
+                      : `linear-gradient(90deg,${lvInfo.dark}99,${lvInfo.dark})`,
+                    transition: 'width 0.4s',
+                  }} />
+                )}
+              </div>
+            </div>
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, marginBottom: 2, fontWeight: mgFull ? 600 : 400, color: mgFull ? '#7c3aed' : '#6b7280' }}>
                 <span>{mgFull ? '⚡ 大招蓄满！快释放！' : '✨ 魔法蓄能 — 完成挑战来充能'}</span>
