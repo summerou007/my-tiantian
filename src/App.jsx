@@ -846,9 +846,10 @@ export default function App() {
       )}
 
       <div style={{ maxWidth: 440, margin: '0 auto' }}>
-        <div style={{ background: 'white', borderRadius: 20, overflow: 'hidden', border: '0.5px solid #e5e7eb' }}>
+        {/* 卡片容器：去掉 overflow:hidden，改用各部分自己的圆角，这样 sticky 才能生效 */}
+        <div style={{ background: 'white', borderRadius: 20, border: '0.5px solid #e5e7eb' }}>
           {/* HEADER */}
-          <div style={{ background: `linear-gradient(135deg,${c1},${c2})`, textAlign: 'center', padding: '14px 12px 22px', position: 'relative' }}>
+          <div style={{ background: `linear-gradient(135deg,${c1},${c2})`, textAlign: 'center', padding: '14px 12px 22px', position: 'relative', borderRadius: '20px 20px 0 0' }}>
             <h1 style={{ fontSize: 16, fontWeight: 600, color: 'white', letterSpacing: 1 }}>🌟 星光小马养成记 🌟</h1>
             <div style={{ position: 'absolute', bottom: -12, left: '50%', transform: 'translateX(-50%)', background: 'white', color: '#a855f7', padding: '3px 16px', borderRadius: 20, fontSize: 11, fontWeight: 500, border: '0.5px solid #e9d5ff', whiteSpace: 'nowrap' }}>
               第 {day} 天 · {lvInfo.name}
@@ -992,7 +993,7 @@ export default function App() {
           </div>
 
           {/* FOOTER */}
-          <div style={{ padding: '8px 14px 14px', borderTop: '0.5px solid #e5e7eb' }}>
+          <div style={{ padding: '8px 14px 14px', borderTop: '0.5px solid #e5e7eb', borderRadius: '0 0 20px 20px' }}>
             <button onClick={nextDay} disabled={dead} style={{ width: '100%', background: '#818cf8', color: 'white', border: 'none', padding: 11, borderRadius: 12, fontSize: 13, fontWeight: 500, cursor: dead ? 'not-allowed' : 'pointer', opacity: dead ? 0.35 : 1 }}>
               🌙 睡觉啦！结束今天
             </button>
