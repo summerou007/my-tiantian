@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 
-// 1. 必须有这9行引入代码，确保后缀是 .jpg
 import icon1 from './icon1.jpg';
 import icon2 from './icon2.jpg';
 import icon3 from './icon3.jpg';
@@ -10,7 +9,6 @@ import icon6 from './icon6.jpg';
 import icon7 from './icon7.jpg';
 import icon8 from './icon8.jpg';
 import icon9 from './icon9.jpg';
-// 引入 15 个等级的小马图片（注意 1.png 在 h 文件夹下）
 import p1 from './h/1.png';
 import p2 from './h/2.png';
 import p3 from './h/3.png';
@@ -27,10 +25,8 @@ import p13 from './h/13.png';
 import p14 from './h/14.png';
 import p15 from './h/15.png';
 
-// 把它们存到一个数组里，方便根据等级切换
 const PONY_PICS = [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15];
 
-// 2. 这里的 icon1 到 icon9 千万不能加引号！
 const TASKS = [
   { id: 1, icon: icon1, text: '听到闹钟立刻起床不赖床', pts: 15, double: false, attackType: 'sunrise' },
   { id: 2, icon: icon2, text: '自己刷牙洗脸换衣服', pts: 10, double: false, attackType: 'bubble' },
@@ -44,47 +40,50 @@ const TASKS = [
 ];
 
 const LEVELS = [
-  { lv: 1,  name: '小马驹',     color: '#fed7aa', dark: '#f97316' },
-  { lv: 2,  name: '独角小马',   color: '#fce7f3', dark: '#f472b6' },
-  { lv: 3,  name: '彩虹马驹',   color: '#fef9c3', dark: '#eab308' },
-  { lv: 4,  name: '魔法独角兽', color: '#dcfce7', dark: '#22c55e' },
-  { lv: 5,  name: '星光飞马',   color: '#dbeafe', dark: '#3b82f6' },
-  { lv: 6,  name: '幻影独角兽', color: '#ede9fe', dark: '#8b5cf6' },
-  { lv: 7,  name: '火焰战马',   color: '#fef2f2', dark: '#ef4444' },
-  { lv: 8,  name: '冰晶飞马',   color: '#e0f2fe', dark: '#0ea5e9' },
-  { lv: 9,  name: '雷霆神驹',   color: '#fefce8', dark: '#ca8a04' },
+  { lv: 1, name: '小马驹', color: '#fed7aa', dark: '#f97316' },
+  { lv: 2, name: '独角小马', color: '#fce7f3', dark: '#f472b6' },
+  { lv: 3, name: '彩虹马驹', color: '#fef9c3', dark: '#eab308' },
+  { lv: 4, name: '魔法独角兽', color: '#dcfce7', dark: '#22c55e' },
+  { lv: 5, name: '星光飞马', color: '#dbeafe', dark: '#3b82f6' },
+  { lv: 6, name: '幻影独角兽', color: '#ede9fe', dark: '#8b5cf6' },
+  { lv: 7, name: '火焰战马', color: '#fef2f2', dark: '#ef4444' },
+  { lv: 8, name: '冰晶飞马', color: '#e0f2fe', dark: '#0ea5e9' },
+  { lv: 9, name: '雷霆神驹', color: '#fefce8', dark: '#ca8a04' },
   { lv: 10, name: '星河独角兽', color: '#fdf4ff', dark: '#d946ef' },
-  { lv: 11, name: '时空飞马',   color: '#f0fdf4', dark: '#16a34a' },
-  { lv: 12, name: '宇宙战神',   color: '#fff7ed', dark: '#ea580c' },
+  { lv: 11, name: '时空飞马', color: '#f0fdf4', dark: '#16a34a' },
+  { lv: 12, name: '宇宙战神', color: '#fff7ed', dark: '#ea580c' },
   { lv: 13, name: '彩虹守护者', color: '#fdf2f8', dark: '#ec4899' },
-  { lv: 14, name: '星辰圣马',   color: '#f5f3ff', dark: '#7c3aed' },
-  { lv: 15, name: '彩虹传说',   color: '#ffffff', dark: '#a855f7' },
+  { lv: 14, name: '星辰圣马', color: '#f5f3ff', dark: '#7c3aed' },
+  { lv: 15, name: '彩虹传说', color: '#ffffff', dark: '#a855f7' },
 ];
 
-// Magic threshold: always 600. Tasks recharge it. Full → unleash ultimate!
 function mgThreshold() { return 600; }
 
 const VILLAINS = [
-  { name: '赖床怪',   desc: '喜欢让你赖床的怪兽',   color: '#7f1d1d', body: '#ef4444', hp: 100,  shieldColor: '#94a3b8', armorColor: '#64748b' },
-  { name: '邋遢精',   desc: '让你不收拾东西的妖怪',  color: '#78350f', body: '#f97316', hp: 120,  shieldColor: '#b45309', armorColor: '#92400e' },
-  { name: '拖延魔',   desc: '总叫你拖到明天再做！',  color: '#365314', body: '#84cc16', hp: 140,  shieldColor: '#4d7c0f', armorColor: '#365314' },
-  { name: '零食鬼',   desc: '让你不好好吃饭的馋鬼',  color: '#7c2d12', body: '#fb923c', hp: 160,  shieldColor: '#c2410c', armorColor: '#9a3412' },
-  { name: '发呆精',   desc: '让你上课发呆走神！',    color: '#1e3a5f', body: '#60a5fa', hp: 180,  shieldColor: '#1d4ed8', armorColor: '#1e40af' },
-  { name: '哭闹王',   desc: '让你乱发脾气的暴君',    color: '#4a044e', body: '#c026d3', hp: 200,  shieldColor: '#7e22ce', armorColor: '#6b21a8' },
-  { name: '骗人妖',   desc: '让你说谎欺骗的妖精',    color: '#052e16', body: '#16a34a', hp: 220,  shieldColor: '#15803d', armorColor: '#166534' },
-  { name: '夜猫怪',   desc: '让你熬夜不睡觉的恶魔',  color: '#1e1b4b', body: '#6366f1', hp: 240,  shieldColor: '#4338ca', armorColor: '#3730a3' },
-  { name: '乱丢怪',   desc: '让你到处乱丢东西！',    color: '#422006', body: '#d97706', hp: 260,  shieldColor: '#b45309', armorColor: '#92400e' },
-  { name: '偷懒仙',   desc: '让你什么都不想做！',    color: '#0f172a', body: '#64748b', hp: 280,  shieldColor: '#475569', armorColor: '#334155' },
-  { name: '骄傲龙',   desc: '让你觉得自己总是对的',  color: '#450a0a', body: '#dc2626', hp: 300,  shieldColor: '#b91c1c', armorColor: '#991b1b' },
-  { name: '嫉妒精',   desc: '让你嫉妒别人的绿妖',    color: '#14532d', body: '#15803d', hp: 320,  shieldColor: '#166534', armorColor: '#14532d' },
-  { name: '逃避鬼',   desc: '让你逃避困难的幽灵',    color: '#1c1917', body: '#78716c', hp: 340,  shieldColor: '#57534e', armorColor: '#44403c' },
-  { name: '懒虫王',   desc: '懒惰的终极大BOSS！',     color: '#1a1a2e', body: '#4338ca', hp: 380,  shieldColor: '#3730a3', armorColor: '#312e81' },
-  { name: '混沌魔王', desc: '所有坏习惯的源头！',     color: '#0f0f0f', body: '#7c3aed', hp: 450,  shieldColor: '#6d28d9', armorColor: '#5b21b6' },
+  { name: '赖床怪', desc: '喜欢让你赖床的怪兽', color: '#7f1d1d', body: '#ef4444', hp: 100, shieldColor: '#94a3b8', armorColor: '#64748b' },
+  { name: '邋遢精', desc: '让你不收拾东西的妖怪', color: '#78350f', body: '#f97316', hp: 120, shieldColor: '#b45309', armorColor: '#92400e' },
+  { name: '拖延魔', desc: '总叫你拖到明天再做！', color: '#365314', body: '#84cc16', hp: 140, shieldColor: '#4d7c0f', armorColor: '#365314' },
+  { name: '零食鬼', desc: '让你不好好吃饭的馋鬼', color: '#7c2d12', body: '#fb923c', hp: 160, shieldColor: '#c2410c', armorColor: '#9a3412' },
+  { name: '发呆精', desc: '让你上课发呆走神！', color: '#1e3a5f', body: '#60a5fa', hp: 180, shieldColor: '#1d4ed8', armorColor: '#1e40af' },
+  { name: '哭闹王', desc: '让你乱发脾气的暴君', color: '#4a044e', body: '#c026d3', hp: 200, shieldColor: '#7e22ce', armorColor: '#6b21a8' },
+  { name: '骗人妖', desc: '让你说谎欺骗的妖精', color: '#052e16', body: '#16a34a', hp: 220, shieldColor: '#15803d', armorColor: '#166534' },
+  { name: '夜猫怪', desc: '让你熬夜不睡觉的恶魔', color: '#1e1b4b', body: '#6366f1', hp: 240, shieldColor: '#4338ca', armorColor: '#3730a3' },
+  { name: '乱丢怪', desc: '让你到处乱丢东西！', color: '#422006', body: '#d97706', hp: 260, shieldColor: '#b45309', armorColor: '#92400e' },
+  { name: '偷懒仙', desc: '让你什么都不想做！', color: '#0f172a', body: '#64748b', hp: 280, shieldColor: '#475569', armorColor: '#334155' },
+  { name: '骄傲龙', desc: '让你觉得自己总是对的', color: '#450a0a', body: '#dc2626', hp: 300, shieldColor: '#b91c1c', armorColor: '#991b1b' },
+  { name: '嫉妒精', desc: '让你嫉妒别人的绿妖', color: '#14532d', body: '#15803d', hp: 320, shieldColor: '#166534', armorColor: '#14532d' },
+  { name: '逃避鬼', desc: '让你逃避困难的幽灵', color: '#1c1917', body: '#78716c', hp: 340, shieldColor: '#57534e', armorColor: '#44403c' },
+  { name: '懒虫王', desc: '懒惰的终极大BOSS！', color: '#1a1a2e', body: '#4338ca', hp: 380, shieldColor: '#3730a3', armorColor: '#312e81' },
+  { name: '混沌魔王', desc: '所有坏习惯的源头！', color: '#0f0f0f', body: '#7c3aed', hp: 450, shieldColor: '#6d28d9', armorColor: '#5b21b6' },
 ];
 
 // ── AUDIO ─────────────────────────────────────────────
 let actx = null;
-function ac() { if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); return actx; }
+function ac() {
+  if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+  if (actx.state === 'suspended') actx.resume();
+  return actx;
+}
 function tone(f, d, type = 'sine', vol = 0.25, delay = 0) {
   try {
     const c = ac(), o = c.createOscillator(), g = c.createGain();
@@ -104,7 +103,15 @@ function sfxLevelUp()     { [523,659,784,1047,1319].forEach((f,i) => tone(f,0.18
 function sfxVillainDead() { [400,350,300,250,200,150].forEach((f,i) => tone(f,0.12,'sawtooth',0.25,i*0.07)); }
 function sfxWin()         { const m=[523,587,659,698,784,880,988,1047]; m.forEach((f,i) => tone(f,0.2,'sine',0.4,i*0.15)); }
 
-function sn(k, d) { const v = localStorage.getItem(k); return v !== null && !isNaN(Number(v)) ? Number(v) : d; }
+// ── HELPERS ───────────────────────────────────────────
+function sn(k, d, min, max) {
+  const v = localStorage.getItem(k);
+  if (v === null || isNaN(Number(v))) return d;
+  let n = Number(v);
+  if (min !== undefined) n = Math.max(min, n);
+  if (max !== undefined) n = Math.min(max, n);
+  return n;
+}
 function todayStr() { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
 
 function drawStars(canvas) {
@@ -119,8 +126,7 @@ function drawStars(canvas) {
     ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.7 + 0.3})`; ctx.fill();
   }
 }
-
-// ── VILLAIN DRAW with armor/shield ──────────────────────
+// ── VILLAIN DRAW ──────────────────────────────────────
 function drawVillain(canvas, villainIdx, villainHp, flash, armorPieces) {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
@@ -172,7 +178,6 @@ function drawVillain(canvas, villainIdx, villainHp, flash, armorPieces) {
   }
 
   ctx.shadowBlur = 0;
-
   ctx.beginPath(); ctx.arc(42, eyeY, 6, 0, Math.PI * 2); ctx.fillStyle = '#111'; ctx.fill();
   ctx.beginPath(); ctx.arc(58, eyeY, 6, 0, Math.PI * 2); ctx.fillStyle = '#111'; ctx.fill();
   if (angry || hpPct < 0.5) {
@@ -188,46 +193,39 @@ function drawVillain(canvas, villainIdx, villainHp, flash, armorPieces) {
   ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.font = 'bold 9px system-ui';
   ctx.textAlign = 'center'; ctx.fillText(v.name, 50, 20);
 
-  // ── ARMOR SYSTEM ─────────────────────────────────────
-  const shield = armorPieces.shield;    // 0..3
-  const shoulderL = armorPieces.shoulderL; // 0..2
+  // Armor
+  const shield = armorPieces.shield;
+  const shoulderL = armorPieces.shoulderL;
   const shoulderR = armorPieces.shoulderR;
-  const chestPlate = armorPieces.chest; // 0..2
-  const helm = armorPieces.helm;        // 0..2
+  const chestPlate = armorPieces.chest;
+  const helm = armorPieces.helm;
 
   if (shield > 0) {
     ctx.save();
     ctx.globalAlpha = shield === 3 ? 0.95 : shield === 2 ? 0.65 : 0.35;
     ctx.beginPath();
     ctx.moveTo(10, 60); ctx.lineTo(2, 70); ctx.lineTo(2, 100); ctx.lineTo(10, 114); ctx.lineTo(26, 100); ctx.lineTo(26, 70); ctx.closePath();
-    ctx.fillStyle = v.shieldColor;
-    ctx.fill();
+    ctx.fillStyle = v.shieldColor; ctx.fill();
     if (shield === 3) {
-      ctx.fillStyle = 'rgba(255,255,255,0.6)';
-      ctx.font = 'bold 14px system-ui';
-      ctx.textAlign = 'center';
-      ctx.fillText('✦', 14, 90);
+      ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = 'bold 14px system-ui';
+      ctx.textAlign = 'center'; ctx.fillText('✦', 14, 90);
     }
     if (shield <= 2) {
-      ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.moveTo(8, 72); ctx.lineTo(20, 88); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(14, 70); ctx.lineTo(6, 90); ctx.stroke();
     }
     if (shield === 1) {
-      ctx.strokeStyle = 'rgba(0,0,0,0.6)';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(5, 95); ctx.lineTo(22, 78); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(10, 108); ctx.lineTo(24, 85); ctx.stroke();
     }
-    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(10, 60); ctx.lineTo(2, 70); ctx.lineTo(2, 100); ctx.lineTo(10, 114); ctx.lineTo(26, 100); ctx.lineTo(26, 70); ctx.closePath();
     ctx.stroke();
     ctx.restore();
   }
-
   if (helm > 0) {
     ctx.save();
     ctx.globalAlpha = helm === 2 ? 0.9 : 0.5;
@@ -235,8 +233,7 @@ function drawVillain(canvas, villainIdx, villainHp, flash, armorPieces) {
     ctx.arc(50, eyeY - 30, 22, Math.PI, 0, false);
     ctx.lineTo(70, eyeY - 16); ctx.lineTo(30, eyeY - 16); ctx.closePath();
     ctx.fillStyle = v.armorColor; ctx.fill();
-    ctx.fillStyle = 'rgba(0,0,0,0.6)';
-    ctx.fillRect(36, eyeY - 24, 28, 5);
+    ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(36, eyeY - 24, 28, 5);
     if (helm === 1) {
       ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.moveTo(40, eyeY - 36); ctx.lineTo(52, eyeY - 20); ctx.stroke();
@@ -274,13 +271,11 @@ function drawVillain(canvas, villainIdx, villainHp, flash, armorPieces) {
   if (chestPlate > 0) {
     ctx.save();
     ctx.globalAlpha = chestPlate === 2 ? 0.8 : 0.4;
-    ctx.beginPath();
-    ctx.roundRect(32, 66, 36, 34, 4);
+    ctx.beginPath(); ctx.roundRect(32, 66, 36, 34, 4);
     ctx.fillStyle = v.armorColor; ctx.fill();
     if (chestPlate === 2) {
       ctx.fillStyle = 'rgba(255,255,255,0.25)';
-      ctx.fillRect(36, 70, 12, 4);
-      ctx.fillRect(52, 70, 12, 4);
+      ctx.fillRect(36, 70, 12, 4); ctx.fillRect(52, 70, 12, 4);
     }
     if (chestPlate === 1) {
       ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1.5;
@@ -293,8 +288,6 @@ function drawVillain(canvas, villainIdx, villainHp, flash, armorPieces) {
     ctx.restore();
   }
 }
-
-// ── COMPUTE ARMOR STATE from HP pct ──────────────────
 function getArmorPieces(hpPct) {
   const shield = hpPct > 0.75 ? 3 : hpPct > 0.55 ? 2 : hpPct > 0.3 ? 1 : 0;
   const helm = hpPct > 0.6 ? 2 : hpPct > 0.25 ? 1 : 0;
@@ -310,7 +303,7 @@ function drawAttackEffect(canvas, attackType, progress, lvInfo) {
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const w = canvas.width, h = canvas.height;
-  const t = progress; 
+  const t = progress;
 
   switch (attackType) {
     case 'sunrise': {
@@ -328,8 +321,7 @@ function drawAttackEffect(canvas, attackType, progress, lvInfo) {
         ctx.lineTo(cx + Math.cos(angle) * maxR, cy + Math.sin(angle) * maxR);
         ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 3; ctx.stroke();
       }
-      ctx.restore();
-      break;
+      ctx.restore(); break;
     }
     case 'bubble': {
       const bubbles = [
@@ -350,8 +342,7 @@ function drawAttackEffect(canvas, attackType, progress, lvInfo) {
         ctx.beginPath(); ctx.arc(bx - b.size * 0.3, by - b.size * 0.3, b.size * 0.25, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fill();
         ctx.restore();
-      });
-      break;
+      }); break;
     }
     case 'star_throw': {
       const stars = [
@@ -377,13 +368,11 @@ function drawAttackEffect(canvas, attackType, progress, lvInfo) {
         ctx.globalAlpha *= 0.4;
         for (let tr = 1; tr <= 3; tr++) {
           const tx = sx - (w * 0.9 * st / 3) * tr * 0.1;
-          ctx.beginPath();
-          ctx.arc(tx - sx, 0, 4 - tr, 0, Math.PI * 2);
+          ctx.beginPath(); ctx.arc(tx - sx, 0, 4 - tr, 0, Math.PI * 2);
           ctx.fillStyle = s.color; ctx.fill();
         }
         ctx.restore();
-      });
-      break;
+      }); break;
     }
     case 'book_blast': {
       ctx.save();
@@ -408,38 +397,32 @@ function drawAttackEffect(canvas, attackType, progress, lvInfo) {
         for (let l = 0; l < 4; l++) { ctx.beginPath(); ctx.moveTo(-6, -6 + l * 4); ctx.lineTo(6, -6 + l * 4); ctx.stroke(); }
         ctx.restore();
       }
-      ctx.restore();
-      break;
+      ctx.restore(); break;
     }
     case 'moon_beam': {
       ctx.save();
-      const progress2 = t;
       ctx.globalAlpha = Math.sin(t * Math.PI) * 0.85;
-      const grad = ctx.createLinearGradient(0, h * 0.45, w * progress2, h * 0.55);
-      grad.addColorStop(0, '#a78bfa');
-      grad.addColorStop(0.5, '#7c3aed');
-      grad.addColorStop(1, '#312e81');
+      const grad = ctx.createLinearGradient(0, h * 0.45, w * t, h * 0.55);
+      grad.addColorStop(0, '#a78bfa'); grad.addColorStop(0.5, '#7c3aed'); grad.addColorStop(1, '#312e81');
       ctx.beginPath();
       ctx.moveTo(0, h * 0.45);
-      ctx.quadraticCurveTo(w * progress2 * 0.5, h * 0.3, w * progress2, h * 0.5);
-      ctx.quadraticCurveTo(w * progress2 * 0.5, h * 0.7, 0, h * 0.55);
-      ctx.closePath();
-      ctx.fillStyle = grad; ctx.fill();
+      ctx.quadraticCurveTo(w * t * 0.5, h * 0.3, w * t, h * 0.5);
+      ctx.quadraticCurveTo(w * t * 0.5, h * 0.7, 0, h * 0.55);
+      ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
       for (let s = 0; s < 6; s++) {
-        const st = s / 6 * progress2;
-        const sx = w * st, sy = h * 0.5 + Math.sin(s * 2) * 15;
+        const st2 = s / 6 * t;
+        const sx = w * st2, sy = h * 0.5 + Math.sin(s * 2) * 15;
         ctx.beginPath(); ctx.arc(sx, sy, 3, 0, Math.PI * 2);
         ctx.fillStyle = '#fbbf24'; ctx.fill();
       }
-      if (progress2 > 0.5) {
-        const tip = { x: w * progress2, y: h * 0.5 };
+      if (t > 0.5) {
+        const tip = { x: w * t, y: h * 0.5 };
         ctx.beginPath(); ctx.arc(tip.x, tip.y, 18, 0, Math.PI * 2);
         ctx.fillStyle = '#c4b5fd'; ctx.fill();
         ctx.beginPath(); ctx.arc(tip.x + 7, tip.y - 4, 14, 0, Math.PI * 2);
         ctx.fillStyle = '#1e1b4b'; ctx.fill();
       }
-      ctx.restore();
-      break;
+      ctx.restore(); break;
     }
     case 'rainbow': {
       ctx.save();
@@ -461,8 +444,7 @@ function drawAttackEffect(canvas, attackType, progress, lvInfo) {
           ctx.fillStyle = colors[sp % 7]; ctx.globalAlpha = 0.9; ctx.fill();
         }
       }
-      ctx.restore();
-      break;
+      ctx.restore(); break;
     }
     case 'laser': {
       ctx.save();
@@ -477,17 +459,14 @@ function drawAttackEffect(canvas, attackType, progress, lvInfo) {
       } else {
         const bt = (t - 0.4) / 0.6;
         ctx.globalAlpha = 1 - bt * 0.7;
-        ctx.beginPath();
-        ctx.moveTo(w * 0.15, h * 0.5);
-        ctx.lineTo(w * 0.85, h * 0.5);
+        ctx.beginPath(); ctx.moveTo(w * 0.15, h * 0.5); ctx.lineTo(w * 0.85, h * 0.5);
         ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 4 + bt * 2; ctx.stroke();
         ctx.strokeStyle = '#fca5a5'; ctx.lineWidth = 2; ctx.stroke();
         ctx.strokeStyle = 'white'; ctx.lineWidth = 1; ctx.stroke();
         ctx.beginPath(); ctx.arc(w * 0.85, h * 0.5, bt * 25, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(239,68,68,${(1 - bt) * 0.6})`; ctx.fill();
       }
-      ctx.restore();
-      break;
+      ctx.restore(); break;
     }
     case 'whirlwind': {
       ctx.save();
@@ -495,8 +474,7 @@ function drawAttackEffect(canvas, attackType, progress, lvInfo) {
       ctx.globalAlpha = Math.sin(t * Math.PI) * 0.8;
       for (let ring = 0; ring < 3; ring++) {
         const r = 15 + ring * 10;
-        ctx.beginPath();
-        ctx.arc(wx, wy, r, -t * 8, -t * 8 + Math.PI * 1.5);
+        ctx.beginPath(); ctx.arc(wx, wy, r, -t * 8, -t * 8 + Math.PI * 1.5);
         ctx.strokeStyle = ring === 0 ? '#60a5fa' : ring === 1 ? '#a78bfa' : '#34d399';
         ctx.lineWidth = 4 - ring; ctx.stroke();
       }
@@ -506,14 +484,11 @@ function drawAttackEffect(canvas, attackType, progress, lvInfo) {
         ctx.fillStyle = '#94a3b8'; ctx.globalAlpha = Math.sin(t * Math.PI) * 0.6;
         ctx.fillRect(wx + Math.cos(da) * dr - 2, wy + Math.sin(da) * dr - 2, 4, 4);
       }
-      ctx.restore();
-      break;
+      ctx.restore(); break;
     }
     default: {
-      ctx.save();
-      ctx.globalAlpha = Math.sin(t * Math.PI) * 0.5;
-      ctx.fillStyle = '#fbbf24';
-      ctx.fillRect(0, 0, w, h);
+      ctx.save(); ctx.globalAlpha = Math.sin(t * Math.PI) * 0.5;
+      ctx.fillStyle = '#fbbf24'; ctx.fillRect(0, 0, w, h);
       ctx.restore();
     }
   }
@@ -526,27 +501,57 @@ function drawAttackEffect(canvas, attackType, progress, lvInfo) {
       const dist = bt * 40;
       const px = w * 0.82 + Math.cos(angle) * dist;
       const py = h * 0.5 + Math.sin(angle) * dist;
-      ctx.save();
-      ctx.globalAlpha = (1 - bt) * 0.9;
+      ctx.save(); ctx.globalAlpha = (1 - bt) * 0.9;
       ctx.fillStyle = i % 2 === 0 ? '#94a3b8' : '#64748b';
       ctx.translate(px, py); ctx.rotate(angle + bt * 5);
-      ctx.fillRect(-4, -2, 8, 4);
-      ctx.restore();
+      ctx.fillRect(-4, -2, 8, 4); ctx.restore();
     }
   }
 }
 
+// ── TASK ROW (memo) ───────────────────────────────────
+const attackTypeLabels = {
+  sunrise: '☀️ 晨光冲击', bubble: '🫧 泡泡攻击', star_throw: '⭐ 星星飞镖',
+  book_blast: '📚 知识爆破', moon_beam: '🌙 月光光束', rainbow: '🌈 彩虹冲击',
+  laser: '🎯 精准激光', whirlwind: '🌀 旋风清扫',
+};
+
+const TaskRow = memo(function TaskRow({ task, isDone, onToggle }) {
+  const earned = task.double ? task.pts * 2 : task.pts;
+  const atkLabel = attackTypeLabels[task.attackType] || '';
+  return (
+    <div onClick={onToggle}
+      style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 9px', borderRadius: 10, border: '0.5px solid #e5e7eb', marginBottom: 5, cursor: 'pointer', background: isDone ? '#f9fafb' : 'white', opacity: isDone ? 0.45 : 1 }}>
+      <div style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid ' + (isDone ? '#22c55e' : '#d1d5db'), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 10, background: isDone ? '#22c55e' : 'transparent', color: 'white' }}>
+        {isDone ? '✓' : ''}
+      </div>
+      <div style={{ flex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: 11, color: isDone ? '#9ca3af' : '#111827', textDecoration: isDone ? 'line-through' : 'none' }}>
+          <img src={task.icon} alt="" style={{ width: 20, height: 20, objectFit: 'cover', borderRadius: '4px', filter: isDone ? 'grayscale(100%) opacity(50%)' : 'none' }} />
+          <span>{task.text}</span>
+        </div>
+        <div style={{ fontSize: 9, color: '#a855f7', marginTop: 1 }}>
+          {atkLabel}{task.sub ? ` · ⚡ ${task.sub}` : ''}
+        </div>
+      </div>
+      <span style={{ fontSize: 10, fontWeight: 500, padding: '2px 6px', borderRadius: 8, color: task.double ? '#7c3aed' : '#d97706', background: task.double ? '#ede9fe' : '#fef9c3' }}>
+        +{earned}⭐
+      </span>
+    </div>
+  );
+});
 // ── MAIN COMPONENT ────────────────────────────────────
 export default function App() {
-  const [pts, setPts]               = useState(() => sn('p_pts', 0));
-  const [hp, setHp]                 = useState(() => sn('p_hp', 80));
-  const [mg, setMg]                 = useState(() => sn('p_mg', 0));
-  const [lv, setLv]                 = useState(() => sn('p_lv', 1));
-  const [day, setDay]               = useState(() => sn('p_dy', 1));
-  const [villainIdx, setVillainIdx] = useState(() => sn('p_vi', 0));
+  const [pts, setPts]               = useState(() => sn('p_pts', 0, 0, 99999));
+  const [hp, setHp]                 = useState(() => sn('p_hp', 80, 0, 100));
+  const [mg, setMg]                 = useState(() => sn('p_mg', 0, 0, 600));
+  const [lv, setLv]                 = useState(() => sn('p_lv', 1, 1, 15));
+  const [day, setDay]               = useState(() => sn('p_dy', 1, 1, 99999));
+  const [villainIdx, setVillainIdx] = useState(() => sn('p_vi', 0, 0, VILLAINS.length - 1));
   const [villainHp, setVillainHp]   = useState(() => {
+    const idx = sn('p_vi', 0, 0, VILLAINS.length - 1);
     const saved = sn('p_vhp', -1);
-    return saved < 0 ? VILLAINS[Math.min(sn('p_vi', 0), VILLAINS.length - 1)].hp : saved;
+    return saved < 0 ? VILLAINS[idx].hp : Math.min(saved, VILLAINS[idx].hp);
   });
   const [done, setDone]             = useState(() => JSON.parse(localStorage.getItem('p_done') || '[]'));
   const [lastDate, setLastDate]     = useState(() => localStorage.getItem('p_date') || '');
@@ -565,19 +570,33 @@ export default function App() {
   const attackCanvasRef  = useRef(null);
   const msgTimer         = useRef(null);
   const attackAnimRef    = useRef(null);
+  const persistTimer     = useRef(null);
 
+  // 防抖存储 - 300ms 内多次变化只写一次
   useEffect(() => {
-    localStorage.setItem('p_pts', pts);
-    localStorage.setItem('p_hp', hp);
-    localStorage.setItem('p_mg', mg);
-    localStorage.setItem('p_lv', lv);
-    localStorage.setItem('p_dy', day);
-    localStorage.setItem('p_vi', villainIdx);
-    localStorage.setItem('p_vhp', villainHp);
-    localStorage.setItem('p_done', JSON.stringify(done));
-    localStorage.setItem('p_date', lastDate);
+    if (persistTimer.current) clearTimeout(persistTimer.current);
+    persistTimer.current = setTimeout(() => {
+      localStorage.setItem('p_pts', pts);
+      localStorage.setItem('p_hp', hp);
+      localStorage.setItem('p_mg', mg);
+      localStorage.setItem('p_lv', lv);
+      localStorage.setItem('p_dy', day);
+      localStorage.setItem('p_vi', villainIdx);
+      localStorage.setItem('p_vhp', villainHp);
+      localStorage.setItem('p_done', JSON.stringify(done));
+      localStorage.setItem('p_date', lastDate);
+    }, 300);
+    return () => clearTimeout(persistTimer.current);
   }, [pts, hp, mg, lv, day, villainIdx, villainHp, done, lastDate]);
 
+  // 清理定时器
+  useEffect(() => {
+    return () => {
+      clearTimeout(msgTimer.current);
+      if (attackAnimRef.current) cancelAnimationFrame(attackAnimRef.current);
+    };
+  }, []);
+  // 跨天检测 - 带提示
   useEffect(() => {
     const today = todayStr();
     if (lastDate && lastDate !== today && hp > 0) {
@@ -585,10 +604,9 @@ export default function App() {
       setDay(d => d + 1);
       setDone([]);
       setLastDate(today);
-      toast(hp <= 40 ? '😭 小马饿晕了...' : '新的一天！加油！');
+      setTimeout(() => toast(hp <= 40 ? '😭 小马饿晕了...' : '🌅 新的一天开始了！小马消耗了体力，快完成任务补充吧！'), 300);
     }
     if (!lastDate) setLastDate(today);
-    try { const old = localStorage.getItem('p_tk'); if (old) localStorage.removeItem('p_tk'); } catch (e) {}
   }, []);
 
   useEffect(() => { drawStars(starsCanvasRef.current); }, []);
@@ -600,7 +618,6 @@ export default function App() {
     drawVillain(villainCanvasRef.current, villainIdx, villainHp, villainFlash, armor);
   }, [villainIdx, villainHp, villainFlash]);
 
-  // Attack effect animation loop
   useEffect(() => {
     if (!currentAttackType || !showAttackCanvas) return;
     const canvas = attackCanvasRef.current;
@@ -627,19 +644,15 @@ export default function App() {
     return () => { if (attackAnimRef.current) cancelAnimationFrame(attackAnimRef.current); };
   }, [currentAttackType, showAttackCanvas, lv]);
 
-  function toast(msg) {
+  const toast = useCallback((msg) => {
     setMessage(msg);
     if (msgTimer.current) clearTimeout(msgTimer.current);
     msgTimer.current = setTimeout(() => setMessage(''), 3000);
-  }
-
+  }, []);
   function attackAnim(onHit, attackType) {
     const phases = ['idle', 'jump', 'attack', 'attack', 'jump', 'idle'];
     let i = 0;
-    if (attackType) {
-      setCurrentAttackType(attackType);
-      setShowAttackCanvas(true);
-    }
+    if (attackType) { setCurrentAttackType(attackType); setShowAttackCanvas(true); }
     function step() {
       setPlayerAnim(phases[Math.min(i, phases.length - 1)]);
       if (i === 2) { setVillainFlash(true); onHit(); }
@@ -689,20 +702,30 @@ export default function App() {
     }
     step();
   }
+  // 使用 ref 追踪最新的 villainIdx/villainHp 避免闭包陷阱
+  const villainIdxRef = useRef(villainIdx);
+  const villainHpRef = useRef(villainHp);
+  useEffect(() => { villainIdxRef.current = villainIdx; }, [villainIdx]);
+  useEffect(() => { villainHpRef.current = villainHp; }, [villainHp]);
 
-  function applyDamage(dmg, currentVillainIdx, currentVillainHp) {
-    const newHp = Math.max(0, currentVillainHp - dmg);
+  function applyDamage(dmg) {
+    const currentIdx = villainIdxRef.current;
+    const currentHp = villainHpRef.current;
+    const newHp = Math.max(0, currentHp - dmg);
     setVillainHp(newHp);
+    villainHpRef.current = newHp;
     if (newHp <= 0) {
       sfxVillainDead();
       setTimeout(() => {
-        const v = VILLAINS[currentVillainIdx];
-        if (currentVillainIdx >= VILLAINS.length - 1) {
+        const v = VILLAINS[currentIdx];
+        if (currentIdx >= VILLAINS.length - 1) {
           setGameWon(true); sfxWin();
         } else {
-          const nextIdx = currentVillainIdx + 1;
+          const nextIdx = currentIdx + 1;
           setVillainIdx(nextIdx);
+          villainIdxRef.current = nextIdx;
           setVillainHp(VILLAINS[nextIdx].hp);
+          villainHpRef.current = VILLAINS[nextIdx].hp;
           toast('⚔️ 打败了' + v.name + '！新敌人：' + VILLAINS[nextIdx].name + '！');
         }
       }, 600);
@@ -723,12 +746,12 @@ export default function App() {
     const mgT = mgThreshold();
     if (mg < mgT) { toast('魔法还没蓄满！继续完成挑战！'); return; }
     sfxMagicBeam();
-    const dmg = Math.floor(villainHp * 0.45 + 30); 
+    const dmg = Math.floor(villainHpRef.current * 0.45 + 30);
     magicBeamAnim(() => {
-      applyDamage(dmg, villainIdx, villainHp);
+      applyDamage(dmg);
       toast('💥 大招释放！造成' + dmg + '点伤害！');
     });
-    setMg(0); 
+    setMg(0);
     if (lv < 15) {
       setTimeout(() => {
         setLv(l => {
@@ -740,8 +763,7 @@ export default function App() {
       }, 800);
     }
   }
-
-  function toggleTask(id) {
+  const toggleTask = useCallback((id) => {
     if (hp <= 0) return;
     if (!parent) { toast('请家长开启家长模式后打勾！'); return; }
     if (done.includes(id)) return;
@@ -754,18 +776,15 @@ export default function App() {
     setMg(m => {
       const newMg = Math.min(mgT, m + earnedMg);
       if (newMg >= mgT && m < mgT) {
-        setTimeout(() => {
-          sfxMagicCharge();
-          toast('⚡ 魔法已蓄满！快发动大招！');
-        }, 400);
+        setTimeout(() => { sfxMagicCharge(); toast('⚡ 魔法已蓄满！快发动大招！'); }, 400);
       }
       return newMg;
     });
     sfxTask();
     const directDmg = Math.floor(earnedPts / 5) + 3;
-    attackAnim(() => applyDamage(directDmg, villainIdx, villainHp), t.attackType);
+    attackAnim(() => applyDamage(directDmg), t.attackType);
     toast(`太棒了！+${earnedPts}⭐  魔法+${earnedMg}✨`);
-  }
+  }, [hp, parent, done, toast]);
 
   function nextDay() {
     if (hp <= 0) return;
@@ -778,6 +797,7 @@ export default function App() {
     localStorage.clear();
     setPts(0); setHp(80); setMg(0); setLv(1); setDay(1);
     setVillainIdx(0); setVillainHp(VILLAINS[0].hp);
+    villainIdxRef.current = 0; villainHpRef.current = VILLAINS[0].hp;
     setDone([]); setLastDate(todayStr()); setGameWon(false);
     toast('小马重生了！加油！');
   }
@@ -795,24 +815,10 @@ export default function App() {
     ['#f472b6','#ec4899'],['#a78bfa','#7c3aed'],['#c084fc','#a855f7'],
   ];
   const [c1, c2] = hdrColors[Math.min(lv - 1, 14)];
-
-  const currentV = VILLAINS[Math.min(villainIdx, VILLAINS.length - 1)];
-  const hpPct = Math.max(0, villainHp / currentV.hp);
+  const hpPct = Math.max(0, villainHp / v.hp);
   const armorPieces = getArmorPieces(hpPct);
   const shieldLabels = ['', '盾牌残片', '盾牌碎裂', '盾牌完整'];
   const armorLabel = hpPct > 0.6 ? '铠甲完整' : hpPct > 0.3 ? '铠甲破损' : hpPct > 0.1 ? '铠甲碎裂' : '铠甲全毁';
-
-  const attackTypeLabels = {
-    sunrise: '☀️ 晨光冲击',
-    bubble: '🫧 泡泡攻击',
-    star_throw: '⭐ 星星飞镖',
-    book_blast: '📚 知识爆破',
-    moon_beam: '🌙 月光光束',
-    rainbow: '🌈 彩虹冲击',
-    laser: '🎯 精准激光',
-    whirlwind: '🌀 旋风清扫',
-  };
-
   return (
     <div className="min-h-screen bg-pink-50 p-2" style={{ fontFamily: 'system-ui, sans-serif' }}>
       {gameWon && (
@@ -832,6 +838,13 @@ export default function App() {
         </div>
       )}
 
+      {/* TOAST - fixed */}
+      {message && (
+        <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', background: 'white', border: '1.5px solid #f472b6', color: '#be185d', padding: '5px 16px', borderRadius: 20, fontSize: 12, fontWeight: 500, zIndex: 999, whiteSpace: 'nowrap' }}>
+          {message}
+        </div>
+      )}
+
       <div style={{ maxWidth: 440, margin: '0 auto' }}>
         <div style={{ background: 'white', borderRadius: 20, overflow: 'hidden', border: '0.5px solid #e5e7eb' }}>
           {/* HEADER */}
@@ -841,68 +854,58 @@ export default function App() {
               第 {day} 天 · {lvInfo.name}
             </div>
           </div>
+          {/* ARENA - sticky 固定在顶部，滚动时始终可见 */}
+          <div style={{ position: 'sticky', top: 0, zIndex: 50 }}>
+            <div style={{ position: 'relative', height: 210, background: 'linear-gradient(180deg,#1e1b4b 0%,#312e81 40%,#4c1d95 70%,#7c3aed 100%)', overflow: 'hidden', marginTop: 12 }}>
+              <canvas ref={starsCanvasRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} />
+              <canvas ref={attackCanvasRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', display: showAttackCanvas ? 'block' : 'none', zIndex: 8 }} />
+              <canvas ref={beamCanvasRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', display: showBeam ? 'block' : 'none', zIndex: 10 }} />
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 32, background: 'linear-gradient(180deg,#7c3aed,#5b21b6)', borderTop: '2px solid #a78bfa' }} />
 
-          {/* TOAST */}
-          {message && (
-            <div style={{ position: 'fixed', top: 16, left: '50%', transform: 'translateX(-50%)', background: 'white', border: '1.5px solid #f472b6', color: '#be185d', padding: '5px 16px', borderRadius: 20, fontSize: 12, fontWeight: 500, zIndex: 999, whiteSpace: 'nowrap' }}>
-              {message}
-            </div>
-          )}
-
-          {/* ARENA */}
-          <div style={{ position: 'relative', height: 210, background: 'linear-gradient(180deg,#1e1b4b 0%,#312e81 40%,#4c1d95 70%,#7c3aed 100%)', overflow: 'hidden', marginTop: 12 }}>
-            <canvas ref={starsCanvasRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} />
-            <canvas ref={attackCanvasRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', display: showAttackCanvas ? 'block' : 'none', zIndex: 8 }} />
-            <canvas ref={beamCanvasRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', display: showBeam ? 'block' : 'none', zIndex: 10 }} />
-
-            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 32, background: 'linear-gradient(180deg,#7c3aed,#5b21b6)', borderTop: '2px solid #a78bfa' }} />
-
-            {/* Player */}
-            <div style={{ position: 'absolute', bottom: 32, left: 16, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ width: 70, height: 5, background: 'rgba(0,0,0,0.4)', borderRadius: 5, overflow: 'hidden', marginBottom: 2 }}>
-                <div style={{ width: hp + '%', height: '100%', background: 'linear-gradient(90deg,#4ade80,#22c55e)', borderRadius: 5, transition: 'width 0.4s' }} />
-              </div>
-              <img    
-                src={PONY_PICS[Math.min(lv - 1, 14)]}    
-                alt="甜甜的小马"    
-                style={{      
-                  width: 85,      
-                  height: 85,      
-                  objectFit: 'contain',     
-                  borderRadius: '8px',     
-                  transform: playerAnim === 'jump' ? 'translateY(-18px)' : playerAnim === 'attack' ? 'translateX(15px)' : 'none',     
-                  transition: 'transform 0.1s ease',     
-                  filter: hp <= 0 ? 'grayscale(100%) opacity(70%)' : (mg >= mgThreshold() ? 'drop-shadow(0 0 12px #fbbf24)' : 'none')   
-                }}  
-              />
-              <div style={{ width: 50, height: 8, background: 'rgba(0,0,0,0.4)', borderRadius: '50%', marginTop: -4 }} />
-              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>甜甜 Lv.{lv}</div>
-            </div>
-
-            {/* Villain */}
-            <div style={{ position: 'absolute', bottom: 32, right: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ width: 80, height: 5, background: 'rgba(0,0,0,0.4)', borderRadius: 5, overflow: 'hidden', marginBottom: 2 }}>
-                <div style={{ width: (Math.max(0, villainHp / v.hp) * 100) + '%', height: '100%', background: 'linear-gradient(90deg,#f87171,#ef4444)', borderRadius: 5, transition: 'width 0.4s' }} />
-              </div>
-              <canvas ref={villainCanvasRef} width={100} height={140} />
-              <div style={{ width: 55, height: 8, background: 'rgba(0,0,0,0.4)', borderRadius: '50%', marginTop: -4 }} />
-              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{v.name}</div>
-            </div>
-
-            <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', flexDirection: 'column', gap: 2, zIndex: 5 }}>
-              {armorPieces.shield > 0 && (
-                <div style={{ fontSize: 8, padding: '1px 5px', borderRadius: 6, background: 'rgba(0,0,0,0.5)', color: armorPieces.shield === 3 ? '#94a3b8' : armorPieces.shield === 2 ? '#fbbf24' : '#f87171', whiteSpace: 'nowrap' }}>
-                  🛡 {shieldLabels[armorPieces.shield]}
+              {/* Player */}
+              <div style={{ position: 'absolute', bottom: 32, left: 16, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ width: 70, height: 5, background: 'rgba(0,0,0,0.4)', borderRadius: 5, overflow: 'hidden', marginBottom: 2 }}>
+                  <div style={{ width: hp + '%', height: '100%', background: 'linear-gradient(90deg,#4ade80,#22c55e)', borderRadius: 5, transition: 'width 0.4s' }} />
                 </div>
-              )}
-              {hpPct < 1 && (
-                <div style={{ fontSize: 8, padding: '1px 5px', borderRadius: 6, background: 'rgba(0,0,0,0.5)', color: hpPct > 0.4 ? '#94a3b8' : hpPct > 0.2 ? '#fbbf24' : '#f87171', whiteSpace: 'nowrap' }}>
-                  🛡 {armorLabel}
+                <img
+                  src={PONY_PICS[Math.min(lv - 1, 14)]}
+                  alt="甜甜的小马"
+                  style={{
+                    width: 85, height: 85, objectFit: 'contain', borderRadius: '8px',
+                    transform: playerAnim === 'jump' ? 'translateY(-18px)' : playerAnim === 'attack' ? 'translateX(15px)' : 'none',
+                    transition: 'transform 0.1s ease',
+                    filter: dead ? 'grayscale(100%) opacity(70%)' : (mgFull ? 'drop-shadow(0 0 12px #fbbf24)' : 'none')
+                  }}
+                />
+                <div style={{ width: 50, height: 8, background: 'rgba(0,0,0,0.4)', borderRadius: '50%', marginTop: -4 }} />
+                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>甜甜 Lv.{lv}</div>
+              </div>
+
+              {/* Villain */}
+              <div style={{ position: 'absolute', bottom: 32, right: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ width: 80, height: 5, background: 'rgba(0,0,0,0.4)', borderRadius: 5, overflow: 'hidden', marginBottom: 2 }}>
+                  <div style={{ width: (hpPct * 100) + '%', height: '100%', background: 'linear-gradient(90deg,#f87171,#ef4444)', borderRadius: 5, transition: 'width 0.4s' }} />
                 </div>
-              )}
+                <canvas ref={villainCanvasRef} width={100} height={140} />
+                <div style={{ width: 55, height: 8, background: 'rgba(0,0,0,0.4)', borderRadius: '50%', marginTop: -4 }} />
+                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>{v.name}</div>
+              </div>
+
+              {/* Armor labels */}
+              <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', flexDirection: 'column', gap: 2, zIndex: 5 }}>
+                {armorPieces.shield > 0 && (
+                  <div style={{ fontSize: 8, padding: '1px 5px', borderRadius: 6, background: 'rgba(0,0,0,0.5)', color: armorPieces.shield === 3 ? '#94a3b8' : armorPieces.shield === 2 ? '#fbbf24' : '#f87171', whiteSpace: 'nowrap' }}>
+                    🛡 {shieldLabels[armorPieces.shield]}
+                  </div>
+                )}
+                {hpPct < 1 && (
+                  <div style={{ fontSize: 8, padding: '1px 5px', borderRadius: 6, background: 'rgba(0,0,0,0.5)', color: hpPct > 0.4 ? '#94a3b8' : hpPct > 0.2 ? '#fbbf24' : '#f87171', whiteSpace: 'nowrap' }}>
+                    🛡 {armorLabel}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-
           {/* STATS ROW */}
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 14px 4px', gap: 6 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500, border: '0.5px solid #e5e7eb', background: '#f9fafb' }}>
@@ -928,7 +931,7 @@ export default function App() {
             </div>
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, marginBottom: 2, fontWeight: mgFull ? 600 : 400, color: mgFull ? '#7c3aed' : '#6b7280' }}>
-                <span>{mgFull ? '⚡ 大招蓄满！快释放！' : `✨ 魔法蓄能 — 完成挑战来充能`}</span>
+                <span>{mgFull ? '⚡ 大招蓄满！快释放！' : '✨ 魔法蓄能 — 完成挑战来充能'}</span>
                 <span>{mg}/{mgT}</span>
               </div>
               <div style={{ height: 9, background: '#f3f4f6', borderRadius: 9, overflow: 'hidden', border: '0.5px solid #e5e7eb', position: 'relative' }}>
@@ -939,7 +942,6 @@ export default function App() {
               </div>
             </div>
           </div>
-
           {/* ACTIONS */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, padding: '4px 14px 8px' }}>
             <button onClick={feedPet} disabled={dead || pts < 10 || hp >= 100}
@@ -983,41 +985,9 @@ export default function App() {
                 <button onClick={restartGame} style={{ width: '100%', background: '#f472b6', color: 'white', border: 'none', padding: 11, borderRadius: 12, fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>让小马复活 🐴</button>
               </div>
             ) : (
-              TASKS.map(t => {
-                const isDone = done.includes(t.id);
-                const earned = t.double ? t.pts * 2 : t.pts;
-                const atkLabel = attackTypeLabels[t.attackType] || '';
-                return (
-                  <div key={t.id} onClick={() => toggleTask(t.id)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 9px', borderRadius: 10, border: '0.5px solid #e5e7eb', marginBottom: 5, cursor: 'pointer', background: isDone ? '#f9fafb' : 'white', opacity: isDone ? 0.45 : 1 }}>
-                    <div style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid ' + (isDone ? '#22c55e' : '#d1d5db'), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 10, background: isDone ? '#22c55e' : 'transparent', color: 'white' }}>
-                      {isDone ? '✓' : ''}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: 11, color: isDone ? '#9ca3af' : '#111827', textDecoration: isDone ? 'line-through' : 'none' }}>
-                        <img 
-                          src={t.icon} 
-                          alt="task icon" 
-                          style={{ 
-                            width: 20, 
-                            height: 20, 
-                            objectFit: 'cover', 
-                            borderRadius: '4px',
-                            filter: isDone ? 'grayscale(100%) opacity(50%)' : 'none' 
-                          }} 
-                        />
-                        <span>{t.text}</span>
-                      </div>
-                      <div style={{ fontSize: 9, color: '#a855f7', marginTop: 1 }}>
-                        {atkLabel}{t.sub ? ` · ⚡ ${t.sub}` : ''}
-                      </div>
-                    </div>
-                    <span style={{ fontSize: 10, fontWeight: 500, padding: '2px 6px', borderRadius: 8, color: t.double ? '#7c3aed' : '#d97706', background: t.double ? '#ede9fe' : '#fef9c3' }}>
-                      +{earned}⭐
-                    </span>
-                  </div>
-                );
-              })
+              TASKS.map(t => (
+                <TaskRow key={t.id} task={t} isDone={done.includes(t.id)} onToggle={() => toggleTask(t.id)} />
+              ))
             )}
           </div>
 
